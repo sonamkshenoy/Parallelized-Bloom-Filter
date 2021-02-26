@@ -1,11 +1,21 @@
 #include "bloomfilter.h"
 #include <stdlib.h>
 #include <iostream>
+#include <vector>
+#include <bitset>
+#include <cstring>
+
 using namespace std;
 
 #define BIG_CONSTANT(x) (x)
 #define ROTL64(x,y) rotl64(x,y)
 #define	FORCE_INLINE inline __attribute__((always_inline))
+
+#define BIT_ARRAY_SIZE  100
+#define SEED_VALUE_1 27
+#define SEED_VALUE_2 58
+#define SEED_VALUE_3 99
+
 
 
 inline uint64_t rotl64(uint64_t x, int8_t r){
@@ -34,9 +44,6 @@ void MurmurHash3_x64_128(const void* key, const int len, const uint32_t seed, ui
   const uint8_t* data = (const uint8_t*)key;
   
   const int nblocks = len/16;
-
-  cout << data << " " << nblocks << "\n";
-  cout <<"Size of char is " << sizeof(int) << "\n";
 
   uint64_t h1 = seed;
   uint64_t h2 = seed;
@@ -115,16 +122,84 @@ void MurmurHash3_x64_128(const void* key, const int len, const uint32_t seed, ui
   h1 += h2;
   h2 += h1;
 
+  int k = 20000;
+
   ((uint64_t*)hash)[0] = h1;
   ((uint64_t*)hash)[1] = h2;
 
 }
 
 
-int main(){
+void insertInHashTable(bitset<BIT_ARRAY_SIZE>& HashTable, char* key, int length){
+  
+  // Calculate 3 hashes and insert
 
   uint64_t hash1[2];
-  MurmurHash3_x64_128("thefirsthashfunction", 20, 27, hash1);
-  cout << hash1[0] << " " << hash1[1];
+  MurmurHash3_x64_128(key, length, SEED_VALUE_1, hash1);
+  int bit1 = (hash1[0] % BIT_ARRAY_SIZE + hash1[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
+  HashTable.set(bit1);
+
+  uint64_t hash2[2];
+  MurmurHash3_x64_128(key, length, SEED_VALUE_2, hash2);
+  int bit2 = (hash2[0] % BIT_ARRAY_SIZE + hash2[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
+  HashTable.set(bit2);
+
+  uint64_t hash3[2];
+  MurmurHash3_x64_128(key, length, SEED_VALUE_3, hash3);
+  int bit3 = (hash3[0] % BIT_ARRAY_SIZE + hash3[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
+  HashTable.set(bit3);
+}
+
+
+void checkIfPresent(bitset<BIT_ARRAY_SIZE> HashTable, char* key, int length){
+  
+  // Calculate 3 hashes and check bit
+
+  uint64_t hash1[2];
+  MurmurHash3_x64_128(key, length, SEED_VALUE_1, hash1);
+  int bit1 = (hash1[0] % BIT_ARRAY_SIZE + hash1[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
+
+  uint64_t hash2[2];
+  MurmurHash3_x64_128(key, length, SEED_VALUE_2, hash2);
+  int bit2 = (hash2[0] % BIT_ARRAY_SIZE + hash2[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
+
+  uint64_t hash3[2];
+  MurmurHash3_x64_128(key, length, SEED_VALUE_3, hash3);
+  int bit3 = (hash3[0] % BIT_ARRAY_SIZE + hash3[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
+  
+  if(HashTable.test(bit1) == 1 && HashTable.test(bit2) == 1 && HashTable.test(bit3) == 1){
+    cout << key << " might be present" << "\n";
+  }
+  else{
+    cout << key << " is definitely not present" << "\n";
+  }
+}
+
+int main(){
+
+  bitset<BIT_ARRAY_SIZE> HashTable;
+
+  string str = "thefirsthashfunction";
+  int len = str.length();
+  char *cstr = new char[str.length() + 1];
+  strcpy(cstr, str.c_str());
+  insertInHashTable(HashTable, cstr, len);
+  cout << HashTable << "\n";
+  checkIfPresent(HashTable, cstr, len);
+
+  str = "hello";
+  len = str.length();
+  cstr = new char[str.length() + 1];
+  strcpy(cstr, str.c_str());
+  insertInHashTable(HashTable, cstr, len);
+  cout << HashTable << "\n";
+  checkIfPresent(HashTable, cstr, len);
+
+  str = "thefirsthashfunctio";
+  len = str.length();
+  cstr = new char[str.length() + 1];
+  strcpy(cstr, str.c_str());
+  checkIfPresent(HashTable, cstr, len);
+  
 
 }
