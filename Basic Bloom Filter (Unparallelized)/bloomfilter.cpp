@@ -4,6 +4,10 @@
 #include <vector>
 #include <bitset>
 #include <cstring>
+#include <ctime>
+#include <omp.h>
+#include <inttypes.h>
+#include <iomanip>
 
 using namespace std;
 
@@ -11,12 +15,12 @@ using namespace std;
 #define ROTL64(x,y) rotl64(x,y)
 #define	FORCE_INLINE inline __attribute__((always_inline))
 
-#define BIT_ARRAY_SIZE  100
+#define BIT_ARRAY_SIZE  100000
 #define SEED_VALUE_1 27
 #define SEED_VALUE_2 58
 #define SEED_VALUE_3 99
 
-
+const int MAX = 26;
 
 inline uint64_t rotl64(uint64_t x, int8_t r){
   return (x << r) | (x >> (64 - r));
@@ -55,7 +59,8 @@ void MurmurHash3_x64_128(const void* key, const int len, const uint32_t seed, ui
   // body
 
   const uint64_t *blocks = (const uint64_t *)(data);
-
+  
+  #pragma omp parallel for
   for(int i = 0; i < nblocks; i++){
     uint64_t k1 = getblock64(blocks,i*2+0);
     uint64_t k2 = getblock64(blocks,i*2+1);
@@ -129,6 +134,20 @@ void MurmurHash3_x64_128(const void* key, const int len, const uint32_t seed, ui
 
 }
 
+string genRandomString(int n) 
+{ 
+    char alphabet[MAX] = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 
+                          'h', 'i', 'j', 'k', 'l', 'm', 'n',  
+                          'o', 'p', 'q', 'r', 's', 't', 'u', 
+                          'v', 'w', 'x', 'y', 'z' }; 
+  
+    string res = ""; 
+    #pragma omp parallel for
+    for (int i = 0; i < n; i++)  
+        res = res + alphabet[rand() % MAX]; 
+      
+    return res; 
+} 
 
 void insertInHashTable(bitset<BIT_ARRAY_SIZE>& HashTable, char* key, int length){
   
@@ -177,6 +196,9 @@ void checkIfPresent(bitset<BIT_ARRAY_SIZE> HashTable, char* key, int length){
 
 int main(){
 
+  time_t start, end;
+
+  time(&start);
   bitset<BIT_ARRAY_SIZE> HashTable;
 
   string str = "thefirsthashfunction";
@@ -184,7 +206,7 @@ int main(){
   char *cstr = new char[str.length() + 1];
   strcpy(cstr, str.c_str());
   insertInHashTable(HashTable, cstr, len);
-  cout << HashTable << "\n";
+  // cout << HashTable << "\n";
   checkIfPresent(HashTable, cstr, len);
 
   str = "hello";
@@ -192,7 +214,7 @@ int main(){
   cstr = new char[str.length() + 1];
   strcpy(cstr, str.c_str());
   insertInHashTable(HashTable, cstr, len);
-  cout << HashTable << "\n";
+  // cout << HashTable << "\n";
   checkIfPresent(HashTable, cstr, len);
 
   str = "thefirsthashfunctio";
@@ -200,6 +222,19 @@ int main(){
   cstr = new char[str.length() + 1];
   strcpy(cstr, str.c_str());
   checkIfPresent(HashTable, cstr, len);
-  
 
+  for(int i = 0; i < 100000000; i++){
+    str = genRandomString(70);
+    len = str.length();
+    cstr = new char[str.length() + 1];
+    strcpy(cstr, str.c_str());
+    insertInHashTable(HashTable, cstr, len);
+    // cout << HashTable << "\n";
+    checkIfPresent(HashTable, cstr, len);
+  }
+
+  time(&end);
+  double timeTaken = double(end - start);
+  cout << "Time taken: " << fixed << timeTaken << setprecision(9);
+  cout << "s" << endl;
 }
