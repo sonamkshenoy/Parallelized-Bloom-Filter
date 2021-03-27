@@ -1,10 +1,12 @@
 #include "bloomfilter.h"
 #include <stdlib.h>
 #include <iostream>
+#include <semaphore.h>
 #include <vector>
 #include <bitset>
 #include <cstring>
 #include <ctime>
+#include <omp.h>
 #include <inttypes.h>
 #include <iomanip>
 
@@ -20,6 +22,7 @@ using namespace std;
 #define SEED_VALUE_3 99
 
 const int MAX = 26;
+sem_t semaphore;
 
 inline uint64_t rotl64(uint64_t x, int8_t r){
   return (x << r) | (x >> (64 - r));
@@ -51,13 +54,19 @@ void MurmurHash3_x64_128(const void* key, const int len, const uint32_t seed, ui
   uint64_t h1 = seed;
   uint64_t h2 = seed;
 
-  const uint64_t c1 = BIG_CONSTANT(0x87c37b91114253d5);
-  const uint64_t c2 = BIG_CONSTANT(0x4cf5ad432745937f);
+  uint64_t c1;
+  uint64_t c2;
+
+  
+  c1 = BIG_CONSTANT(0x87c37b91114253d5);
+  c2 = BIG_CONSTANT(0x4cf5ad432745937f);
+    
 
   //------------
   // body
 
   const uint64_t *blocks = (const uint64_t *)(data);
+  
 
   for(int i = 0; i < nblocks; i++){
     uint64_t k1 = getblock64(blocks,i*2+0);
@@ -81,6 +90,9 @@ void MurmurHash3_x64_128(const void* key, const int len, const uint32_t seed, ui
     h2 += h1;
     h2 = h2*5+0x38495ab5;
   }
+
+
+
 
   //----------
   // tail
@@ -140,16 +152,16 @@ string genRandomString(int n)
                           'v', 'w', 'x', 'y', 'z' }; 
   
     string res = ""; 
+
     for (int i = 0; i < n; i++)  
         res = res + alphabet[rand() % MAX]; 
       
     return res; 
-}
+} 
 
 void insertInHashTable(bitset<BIT_ARRAY_SIZE>& HashTable, char* key, int length){
   
   // Calculate 3 hashes and insert
-
   uint64_t hash1[2];
   MurmurHash3_x64_128(key, length, SEED_VALUE_1, hash1);
   int bit1 = (hash1[0] % BIT_ARRAY_SIZE + hash1[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
@@ -162,8 +174,10 @@ void insertInHashTable(bitset<BIT_ARRAY_SIZE>& HashTable, char* key, int length)
 
   uint64_t hash3[2];
   MurmurHash3_x64_128(key, length, SEED_VALUE_3, hash3);
-  int bit3 = (hash3[0] % BIT_ARRAY_SIZE + hash3[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
+  int bit3 = (hash3[0] % BIT_ARRAY_SIZE + hash3[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;  
   HashTable.set(bit3);
+  
+  //cout << "Set bits: " << bit1 << ", " << bit2 << ", " << bit3 << "\n";
 }
 
 
@@ -198,40 +212,29 @@ int main(){
   time(&start);
   bitset<BIT_ARRAY_SIZE> HashTable;
 
-  string str = "thefirsthashfunction";
-  int len = str.length();
-  char *cstr = new char[str.length() + 1];
-  strcpy(cstr, str.c_str());
-  insertInHashTable(HashTable, cstr, len);
-  // cout << HashTable << "\n";
-  checkIfPresent(HashTable, cstr, len);
+  sem_init(&semaphore, 0, 1);
 
-  str = "hello";
-  len = str.length();
-  cstr = new char[str.length() + 1];
-  strcpy(cstr, str.c_str());
-  insertInHashTable(HashTable, cstr, len);
-  // cout << HashTable << "\n";
-  checkIfPresent(HashTable, cstr, len);
+  int len;
+  string str;
+  char* cstr;
 
-  str = "thefirsthashfunctio";
-  len = str.length();
-  cstr = new char[str.length() + 1];
-  strcpy(cstr, str.c_str());
-  checkIfPresent(HashTable, cstr, len);
-  for(int i = 0; i < 100000; i++){
+  #pragma omp parallel for private(str, cstr) shared(len)
+  for(int i = 0; i < 1000000; i++){
     str = genRandomString(70);
     len = str.length();
     cstr = new char[len + 1];
     strcpy(cstr, str.c_str());
+    sem_wait(&semaphore);
     insertInHashTable(HashTable, cstr, len);
+    sem_post(&semaphore);
     // cout << HashTable << "\n";
-    checkIfPresent(HashTable, cstr, len);
+    // checkIfPresent(HashTable, cstr, len);
   }
+
+  sem_destroy(&semaphore);
 
   time(&end);
   double timeTaken = double(end - start);
   cout << "Time taken: " << fixed << timeTaken << setprecision(9);
   cout << "s" << endl;
-
 }
