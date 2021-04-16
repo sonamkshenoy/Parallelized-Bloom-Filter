@@ -67,7 +67,6 @@ void MurmurHash3_x64_128(const void* key, const int len, const uint32_t seed, ui
 
   const uint64_t *blocks = (const uint64_t *)(data);
   
-
   for(int i = 0; i < nblocks; i++){
     uint64_t k1 = getblock64(blocks,i*2+0);
     uint64_t k2 = getblock64(blocks,i*2+1);
@@ -176,7 +175,6 @@ void insertInHashTable(bitset<BIT_ARRAY_SIZE>& HashTable, char* key, int length)
   MurmurHash3_x64_128(key, length, SEED_VALUE_3, hash3);
   int bit3 = (hash3[0] % BIT_ARRAY_SIZE + hash3[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;  
   HashTable.set(bit3);
-  
   //cout << "Set bits: " << bit1 << ", " << bit2 << ", " << bit3 << "\n";
 }
 
@@ -219,6 +217,8 @@ int main(){
   char* cstr;
   int numIterations = 500000;
 
+  omp_set_dynamic(0);
+  omp_set_num_threads(4);
   #pragma omp parallel for private(str, cstr) shared(len)
   for(int i = 0; i < numIterations; i++){
     str = genRandomString(70);
