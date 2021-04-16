@@ -217,9 +217,10 @@ int main(){
   int len;
   string str;
   char* cstr;
+  int numIterations = 500000;
 
   #pragma omp parallel for private(str, cstr) shared(len)
-  for(int i = 0; i < 1000000; i++){
+  for(int i = 0; i < numIterations; i++){
     str = genRandomString(70);
     len = str.length();
     cstr = new char[len + 1];
@@ -235,6 +236,6 @@ int main(){
 
   time(&end);
   double timeTaken = double(end - start);
-  cout << "Time taken: " << fixed << timeTaken << setprecision(9);
+  cout << "Time taken for inserting " << numIterations <<  " records in Openmp parallelized version: " << fixed << timeTaken << setprecision(9);
   cout << "s" << endl;
 }

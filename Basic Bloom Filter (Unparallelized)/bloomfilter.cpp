@@ -198,40 +198,24 @@ int main(){
   time(&start);
   bitset<BIT_ARRAY_SIZE> HashTable;
 
-  string str = "thefirsthashfunction";
-  int len = str.length();
-  char *cstr = new char[str.length() + 1];
-  strcpy(cstr, str.c_str());
-  insertInHashTable(HashTable, cstr, len);
-  // cout << HashTable << "\n";
-  checkIfPresent(HashTable, cstr, len);
+  string str;
+  int len;
+  char *cstr;
+  int numIterations = 500000;
 
-  str = "hello";
-  len = str.length();
-  cstr = new char[str.length() + 1];
-  strcpy(cstr, str.c_str());
-  insertInHashTable(HashTable, cstr, len);
-  // cout << HashTable << "\n";
-  checkIfPresent(HashTable, cstr, len);
-
-  str = "thefirsthashfunctio";
-  len = str.length();
-  cstr = new char[str.length() + 1];
-  strcpy(cstr, str.c_str());
-  checkIfPresent(HashTable, cstr, len);
-  for(int i = 0; i < 100000; i++){
+  for(int i = 0; i < numIterations; i++){
     str = genRandomString(70);
     len = str.length();
     cstr = new char[len + 1];
     strcpy(cstr, str.c_str());
     insertInHashTable(HashTable, cstr, len);
     // cout << HashTable << "\n";
-    checkIfPresent(HashTable, cstr, len);
+    // checkIfPresent(HashTable, cstr, len);
   }
 
   time(&end);
   double timeTaken = double(end - start);
-  cout << "Time taken: " << fixed << timeTaken << setprecision(9);
+  cout << "Time taken for inserting " << numIterations <<  " records in unparallelized version: " << fixed << timeTaken << setprecision(9);
   cout << "s" << endl;
 
 }
