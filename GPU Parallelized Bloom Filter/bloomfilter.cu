@@ -1,7 +1,6 @@
 #include "bloomfilter.h"
 #include <stdlib.h>
 #include <iostream>
-#include <semaphore.h>
 #include <vector>
 #include <bitset>
 #include <cstring>
@@ -17,18 +16,21 @@ using namespace std;
 #define ROTL64(x,y) rotl64(x,y)
 #define	FORCE_INLINE inline __attribute__((always_inline))
 
-#define BIT_ARRAY_SIZE  100000
+#define BIT_ARRAY_SIZE  10000000
 #define SEED_VALUE_1 27
 #define SEED_VALUE_2 58
 #define SEED_VALUE_3 99
 
 const int MAX = 26;
-sem_t semaphore;
 
+
+
+//done
 __device__ inline uint64_t rotl64(uint64_t x, int8_t r){
   return (x << r) | (x >> (64 - r));
 }
 
+//done
 __device__ FORCE_INLINE uint64_t fmix64 ( uint64_t k )
 {
   k ^= k >> 33;
@@ -46,30 +48,29 @@ __device__ FORCE_INLINE uint64_t getblock64 ( const uint64_t * p, int i )
   return p[i];
 }
 
+
+
 __global__ void MurmurHash3_x64_128(const void* key, const int len, const uint32_t seed, uint64_t* hash){
 
   const uint8_t* data = (const uint8_t*)key;
   
-  const int nblocks = len/16;
+  const int nblocks = len;
 
   uint64_t h1 = seed;
   uint64_t h2 = seed;
 
-  uint64_t c1;
-  uint64_t c2;
+  const uint64_t c1 = BIG_CONSTANT(0x87c37b91114253d5);
+  const uint64_t c2 = BIG_CONSTANT(0x4cf5ad432745937f);
 
-  
-  c1 = BIG_CONSTANT(0x87c37b91114253d5);
-  c2 = BIG_CONSTANT(0x4cf5ad432745937f);
-    
+
 
   //------------
   // body
 
   const uint64_t *blocks = (const uint64_t *)(data);
-  
 
-  for(int i = 0; i < nblocks; i++){
+  int i = threadIdx.x + blockIdx.x * blockDim.x;
+  if(i < nblocks){
     uint64_t k1 = getblock64(blocks,i*2+0);
     uint64_t k2 = getblock64(blocks,i*2+1);
 
@@ -91,9 +92,6 @@ __global__ void MurmurHash3_x64_128(const void* key, const int len, const uint32
     h2 += h1;
     h2 = h2*5+0x38495ab5;
   }
-
-
-
 
   //----------
   // tail
@@ -138,8 +136,6 @@ __global__ void MurmurHash3_x64_128(const void* key, const int len, const uint32
   h1 += h2;
   h2 += h1;
 
-  //int k = 20000;
-
   ((uint64_t*)hash)[0] = h1;
   ((uint64_t*)hash)[1] = h2;
 
@@ -160,52 +156,53 @@ string genRandomString(int n)
     return res; 
 } 
 
+
 void insertInHashTable(bitset<BIT_ARRAY_SIZE>& HashTable, char* key, int length){
   
   // Calculate 3 hashes and insert
   uint64_t hash1[2];
-  MurmurHash3_x64_128<<<1, 1>>>(key, length, SEED_VALUE_1, hash1);
+  MurmurHash3_x64_128<<<2, 35>>>(key, length, SEED_VALUE_1, hash1);
   int bit1 = (hash1[0] % BIT_ARRAY_SIZE + hash1[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
-  HashTable.set(bit1);
+  HashTable[bit1] = 1;
 
   uint64_t hash2[2];
-  MurmurHash3_x64_128<<<1, 1>>>(key, length, SEED_VALUE_2, hash2);
+  MurmurHash3_x64_128<<<2, 35>>>(key, length, SEED_VALUE_2, hash2);
   int bit2 = (hash2[0] % BIT_ARRAY_SIZE + hash2[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
-  HashTable.set(bit2);
+  HashTable[bit2] = 1;
 
   uint64_t hash3[2];
-  MurmurHash3_x64_128<<<1, 1>>>(key, length, SEED_VALUE_3, hash3);
+  MurmurHash3_x64_128<<<2, 35>>>(key, length, SEED_VALUE_3, hash3);
   int bit3 = (hash3[0] % BIT_ARRAY_SIZE + hash3[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;  
-  HashTable.set(bit3);
+  HashTable[bit3] = 1;
   
-  cudaDeviceSynchronize();
   //cout << "Set bits: " << bit1 << ", " << bit2 << ", " << bit3 << "\n";
 }
 
 
-void checkIfPresent(bitset<BIT_ARRAY_SIZE> HashTable, char* key, int length){
+void checkIfPresent(bitset<BIT_ARRAY_SIZE>& HashTable, char* key, int length){
   
   // Calculate 3 hashes and check bit
 
   uint64_t hash1[2];
-  MurmurHash3_x64_128<<<1, 1>>>(key, length, SEED_VALUE_1, hash1);
+  MurmurHash3_x64_128<<<2, 35>>>(key, length, SEED_VALUE_1, hash1);
   int bit1 = (hash1[0] % BIT_ARRAY_SIZE + hash1[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
 
   uint64_t hash2[2];
-  MurmurHash3_x64_128<<<1, 1>>>(key, length, SEED_VALUE_2, hash2);
+  MurmurHash3_x64_128<<<2, 35>>>(key, length, SEED_VALUE_2, hash2);
   int bit2 = (hash2[0] % BIT_ARRAY_SIZE + hash2[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
 
   uint64_t hash3[2];
-  MurmurHash3_x64_128<<<1, 1>>>(key, length, SEED_VALUE_3, hash3);
+  MurmurHash3_x64_128<<<2, 35>>>(key, length, SEED_VALUE_3, hash3);
   int bit3 = (hash3[0] % BIT_ARRAY_SIZE + hash3[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
 
-  cudaDeviceSynchronize();
   
-  if(HashTable.test(bit1) == 1 && HashTable.test(bit2) == 1 && HashTable.test(bit3) == 1){
-    cout << key << " might be present" << "\n";
+  if(HashTable[bit1] == 1 && HashTable[bit2] == 1 && HashTable[bit3] == 1){
+    //cout << key << " might be present" << "\n";
+    return;
   }
   else{
-    cout << key << " is definitely not present" << "\n";
+    //cout << key << " is definitely not present" << "\n";
+    return;
   }
 }
 
@@ -218,32 +215,26 @@ int main(){
   time(&start);
   bitset<BIT_ARRAY_SIZE> HashTable;
 
-  sem_init(&semaphore, 0, 1);
-
-  
-
-  // size_t threads_per_block = 256;
-  // size_t number_of_blocks = 32;
 
   int len;
   string str;
   char* cstr;
-  
-  for(int i = 0; i < 1000000; i++){
+  int numIterations = 500000;
+
+
+  for(int i = 0; i < numIterations; i++){
     str = genRandomString(70);
     len = str.length();
     cstr = new char[len + 1];
     strcpy(cstr, str.c_str());
-    sem_wait(&semaphore);
     insertInHashTable(HashTable, cstr, len);
-    sem_post(&semaphore);
+    // cout << HashTable << "\n";
+    // checkIfPresent(HashTable, cstr, len);
   }
-  
 
-  sem_destroy(&semaphore);
 
   time(&end);
   double timeTaken = double(end - start);
-  cout << "Time taken: " << fixed << timeTaken << setprecision(9);
+  cout << "Time taken for inserting " << numIterations <<  " records in Cuda parallelized version: " << fixed << timeTaken << setprecision(9);
   cout << "s" << endl;
 }
