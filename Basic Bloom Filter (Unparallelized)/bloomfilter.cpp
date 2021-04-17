@@ -199,16 +199,15 @@ int main(){
   bitset<BIT_ARRAY_SIZE> HashTable;
 
   string str;
-  int len;
+  int lenOfWord = 70;
   char *cstr;
   int numIterations = 500000;
 
   for(int i = 0; i < numIterations; i++){
-    str = genRandomString(70);
-    len = str.length();
-    cstr = new char[len + 1];
+    str = genRandomString(lenOfWord);
+    cstr = new char[lenOfWord + 1];
     strcpy(cstr, str.c_str());
-    insertInHashTable(HashTable, cstr, len);
+    insertInHashTable(HashTable, cstr, lenOfWord);
     // cout << HashTable << "\n";
     // checkIfPresent(HashTable, cstr, len);
   }

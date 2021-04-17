@@ -158,23 +158,30 @@ string genRandomString(int n)
     return res; 
 } 
 
-void insertInHashTable(bitset<BIT_ARRAY_SIZE>& HashTable, char* key, int length){
+void insertInHashTable(bitset<BIT_ARRAY_SIZE>& HashTable, char* key, int length, sem_t semaphore){
   
   // Calculate 3 hashes and insert
   uint64_t hash1[2];
   MurmurHash3_x64_128(key, length, SEED_VALUE_1, hash1);
   int bit1 = (hash1[0] % BIT_ARRAY_SIZE + hash1[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
-  HashTable.set(bit1);
+  
 
   uint64_t hash2[2];
   MurmurHash3_x64_128(key, length, SEED_VALUE_2, hash2);
   int bit2 = (hash2[0] % BIT_ARRAY_SIZE + hash2[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
-  HashTable.set(bit2);
+  
 
   uint64_t hash3[2];
   MurmurHash3_x64_128(key, length, SEED_VALUE_3, hash3);
   int bit3 = (hash3[0] % BIT_ARRAY_SIZE + hash3[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;  
+
+
+  sem_wait(&semaphore);
+  HashTable.set(bit1);
+  HashTable.set(bit2);
   HashTable.set(bit3);
+  sem_post(&semaphore);
+
   //cout << "Set bits: " << bit1 << ", " << bit2 << ", " << bit3 << "\n";
 }
 
@@ -212,22 +219,20 @@ int main(){
 
   sem_init(&semaphore, 0, 1);
 
-  int len;
+  int lenOfWord = 70;
   string str;
   char* cstr;
   int numIterations = 500000;
 
   omp_set_dynamic(0);
   omp_set_num_threads(4);
-  #pragma omp parallel for private(str, cstr) shared(len)
+  #pragma omp parallel for private(str, cstr) shared(lenOfWord)
   for(int i = 0; i < numIterations; i++){
-    str = genRandomString(70);
-    len = str.length();
-    cstr = new char[len + 1];
-    strcpy(cstr, str.c_str());
-    sem_wait(&semaphore);
-    insertInHashTable(HashTable, cstr, len);
-    sem_post(&semaphore);
+    str = genRandomString(lenOfWord);
+    cstr = new char[lenOfWord + 1];
+    strcpy(cstr, str.c_str());  
+    insertInHashTable(HashTable, cstr, lenOfWord, semaphore);
+    
     // cout << HashTable << "\n";
     // checkIfPresent(HashTable, cstr, len);
   }
