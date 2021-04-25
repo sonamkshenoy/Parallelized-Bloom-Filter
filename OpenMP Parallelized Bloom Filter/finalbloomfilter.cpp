@@ -269,8 +269,6 @@ int main(){
     char* cstr;
     bitset<BIT_ARRAY_SIZE> HashTable; 
 
-    time_t start, end;
-    clock_t begin_time;
     auto t_start = std::chrono::high_resolution_clock::now(), t_end = std::chrono::high_resolution_clock::now();
     
 
@@ -292,7 +290,6 @@ int main(){
       #pragma omp single
       {
         t_end = std::chrono::high_resolution_clock::now();
-        cout <<  float( clock () - begin_time ) /  CLOCKS_PER_SEC << " s" << ": Time taken for inserting " << numIterations <<  " records in Openmp parallelized version.";
       }
     }
   
