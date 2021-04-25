@@ -1,4 +1,14 @@
-#include "bloomfilter.h"
+#define _MURMURHASH3_H_
+#include <cstdint>
+
+typedef unsigned int uint32_t;
+typedef unsigned char uint8_t;
+typedef __uint64_t uint64_t;
+
+// Arguments (word to be hashed, length of the key, a seed, the array of two 64 integers storing final hash value)
+void MurmurHash3_x64_128(const void* key, int len, uint32_t seed, uint64_t* hash);
+
+// # include "bloomfilter.h"
 #include <stdlib.h>
 #include <iostream>
 #include <semaphore.h>
@@ -9,6 +19,7 @@
 #include <omp.h>
 #include <inttypes.h>
 #include <iomanip>
+#include <chrono>
 
 using namespace std;
 
@@ -45,52 +56,47 @@ FORCE_INLINE uint64_t getblock64 ( const uint64_t * p, int i )
   return p[i];
 }
 
-void MurmurHash3_x64_128(const void* key, const int len, const uint32_t seed, uint64_t* hash){
+void MurmurHash3_x64_128(const void* key, const int len, const uint32_t seed, uint64_t* hash, uint64_t k1, uint64_t k2, uint64_t k3, uint64_t k4){
 
   const uint8_t* data = (const uint8_t*)key;
-  
   const int nblocks = len/16;
-
   uint64_t h1 = seed;
   uint64_t h2 = seed;
-
   uint64_t c1;
   uint64_t c2;
-
-  
   c1 = BIG_CONSTANT(0x87c37b91114253d5);
   c2 = BIG_CONSTANT(0x4cf5ad432745937f);
-    
-
-  //------------
-  // body
-
   const uint64_t *blocks = (const uint64_t *)(data);
-  
-  for(int i = 0; i < nblocks; i++){
-    uint64_t k1 = getblock64(blocks,i*2+0);
-    uint64_t k2 = getblock64(blocks,i*2+1);
 
-    k1 *= c1;
-    k1  = ROTL64(k1,31);
-    k1 *= c2;
-    h1 ^= k1;
+  h1 ^= k1;
 
-    h1 = ROTL64(h1,27);
-    h1 += h2;
-    h1 = h1*5+0x52dce729;
+  h1 = ROTL64(h1,27);
+  h1 += h2;
+  h1 = h1*5+0x52dce729;
 
-    k2 *= c2;
-    k2  = ROTL64(k2,33);
-    k2 *= c1;
-    h2 ^= k2;
-
-    h2 = ROTL64(h2,31);
-    h2 += h1;
-    h2 = h2*5+0x38495ab5;
-  }
+  // cout << "h1:        " << h1 << "\n";
 
 
+  h2 ^= k2;
+
+  h2 = ROTL64(h2,31);
+  h2 += h1;
+  h2 = h2*5+0x38495ab5;
+
+  // cout << "h2:        " << h2 << "\n";
+
+  h1 ^= k3;
+
+  h1 = ROTL64(h1,27);
+  h1 += h2;
+  h1 = h1*5+0x52dce729;
+
+
+  h2 ^= k4;
+
+  h2 = ROTL64(h2,31);
+  h2 += h1;
+  h2 = h2*5+0x38495ab5;
 
 
   //----------
@@ -98,8 +104,10 @@ void MurmurHash3_x64_128(const void* key, const int len, const uint32_t seed, ui
 
   const uint8_t * tail = (const uint8_t*)(data + nblocks*16);
 
-  uint64_t k1 = 0;
-  uint64_t k2 = 0;
+  // uint64_t 
+  k1 = 0;
+  //uint64_t 
+  k2 = 0;
 
   switch(len & 15){
     case 15: k2 ^= ((uint64_t)tail[14]) << 48;
@@ -156,34 +164,71 @@ string genRandomString(int n)
     return res; 
 } 
 
-void insertInHashTable(bitset<BIT_ARRAY_SIZE>& HashTable, char* key, int length, sem_t, semaphore){
+void insertInHashTable(bitset<BIT_ARRAY_SIZE>& HashTable, char* key, int length){
   
   // Calculate 3 hashes and insert
   uint64_t hash1[2];
-  MurmurHash3_x64_128(key, length, SEED_VALUE_1, hash1);
-  int bit1 = (hash1[0] % BIT_ARRAY_SIZE + hash1[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
-  
-
   uint64_t hash2[2];
-  MurmurHash3_x64_128(key, length, SEED_VALUE_2, hash2);
-  int bit2 = (hash2[0] % BIT_ARRAY_SIZE + hash2[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
-  
-
   uint64_t hash3[2];
-  MurmurHash3_x64_128(key, length, SEED_VALUE_3, hash3);
-  int bit3 = (hash3[0] % BIT_ARRAY_SIZE + hash3[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;  
+  int bit1, bit2, bit3;
 
 
-  sem_wait(&semaphore);
+
+
+  const uint8_t* data = (const uint8_t*)key;
+  const int nblocks = length/16;
+  uint64_t c1;
+  uint64_t c2;
+  c1 = BIG_CONSTANT(0x87c37b91114253d5);
+  c2 = BIG_CONSTANT(0x4cf5ad432745937f);
+  const uint64_t *blocks = (const uint64_t *)(data);
+  int i = 0;
+  uint64_t k1, k2, k3, k4;
+  k1 = getblock64(blocks,i*2+0);
+  k1 *= c1;
+  k1  = ROTL64(k1,31);
+  k1 *= c2;
+
+  k2 = getblock64(blocks,i*2+1);
+  k2 *= c2;
+  k2  = ROTL64(k2,33);
+  k2 *= c1;
+
+  k3 = getblock64(blocks,i*2+2);
+  k3 *= c1;
+  k3  = ROTL64(k3,31);
+  k3 *= c2;
+
+  k4 = getblock64(blocks,i*2+3);
+  k4 *= c2;
+  k4  = ROTL64(k4,33);
+  k4 *= c1;
+
+
+
+MurmurHash3_x64_128(key, length, SEED_VALUE_1, hash1, k1, k2, k3, k4);
+bit1 = (hash1[0] % BIT_ARRAY_SIZE + hash1[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
+
+MurmurHash3_x64_128(key, length, SEED_VALUE_2, hash2, k1, k2, k3, k4);
+bit2 = (hash2[0] % BIT_ARRAY_SIZE + hash2[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
+
+MurmurHash3_x64_128(key, length, SEED_VALUE_3, hash3, k1, k2, k3, k4);
+bit3 = (hash3[0] % BIT_ARRAY_SIZE + hash3[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;  
+
+
+  // cout << "Bits set are: " << bit1 << "," << bit2 << " and " << bit3 << "\n";
+
+
   HashTable.set(bit1);
   HashTable.set(bit2);
   HashTable.set(bit3);
-  sem_post(&semaphore);
+
 
   //cout << "Set bits: " << bit1 << ", " << bit2 << ", " << bit3 << "\n";
 }
 
 
+/*
 void checkIfPresent(bitset<BIT_ARRAY_SIZE> HashTable, char* key, int length){
   
   // Calculate 3 hashes and check bit
@@ -206,39 +251,53 @@ void checkIfPresent(bitset<BIT_ARRAY_SIZE> HashTable, char* key, int length){
   else{
     cout << key << " is definitely not present" << "\n";
   }
-}
+}*/
 
 int main(){
 
-  time_t start, end;
+    int lenOfWord = 32;
+    string str;
+    int numIterations = 100000;
 
-  time(&start);
-  bitset<BIT_ARRAY_SIZE> HashTable;
+    vector<string> wordsToInsert;
+    for(int i = 0; i < numIterations; i++){
+        str = genRandomString(lenOfWord);
+        wordsToInsert.push_back(str);
+    }
 
-  sem_init(&semaphore, 0, 1);
 
-  int lenOfWord = 70;
-  string str;
-  char* cstr;
-  int numIterations = 1000000;
+    char* cstr;
+    bitset<BIT_ARRAY_SIZE> HashTable; 
 
-  omp_set_dynamic(0);
-  omp_set_num_threads(4);
-  #pragma omp parallel for private(str, cstr) shared(lenOfWord)
-  for(int i = 0; i < numIterations; i++){
-    str = genRandomString(lenOfWord);
-    cstr = new char[lenOfWord + 1];
-    strcpy(cstr, str.c_str()); 
-    insertInHashTable(HashTable, cstr, lenOfWord, semaphore);
+    time_t start, end;
+    clock_t begin_time;
+    auto t_start = std::chrono::high_resolution_clock::now(), t_end = std::chrono::high_resolution_clock::now();
     
-    // cout << HashTable << "\n";
-    // checkIfPresent(HashTable, cstr, len);
-  }
 
-  sem_destroy(&semaphore);
+    #pragma omp parallel
+    {
+      #pragma omp single
+      {
+        t_start = std::chrono::high_resolution_clock::now();
+      }
+      
+      #pragma omp for
+      for(int i = 0; i < numIterations; ++i){
+          str = wordsToInsert[i];
+          cstr = new char[lenOfWord + 1];
+          strcpy(cstr, str.c_str()); 
+          insertInHashTable(HashTable, cstr, lenOfWord);
+      }
+     
+      #pragma omp single
+      {
+        t_end = std::chrono::high_resolution_clock::now();
+        cout <<  float( clock () - begin_time ) /  CLOCKS_PER_SEC << " s" << ": Time taken for inserting " << numIterations <<  " records in Openmp parallelized version.";
+      }
+    }
+  
+  double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end-t_start).count();
 
-  time(&end);
-  double timeTaken = double(end - start);
-  cout << "Time taken for inserting " << numIterations <<  " records in Openmp parallelized version: " << fixed << timeTaken << setprecision(9);
-  cout << "s" << endl;
+  cout << "Time taken for inserting " << numIterations <<  " records in Openmp parallelized version: " << fixed << elapsed_time_ms << setprecision(9);
+  cout << " ms" << endl;
 }

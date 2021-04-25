@@ -7,6 +7,7 @@
 #include <ctime>
 #include <inttypes.h>
 #include <iomanip>
+#include <chrono>
 
 using namespace std;
 
@@ -61,7 +62,9 @@ void MurmurHash3_x64_128(const void* key, const int len, const uint32_t seed, ui
 
   for(int i = 0; i < nblocks; i++){
     uint64_t k1 = getblock64(blocks,i*2+0);
+    // cout << k1 << "\n";
     uint64_t k2 = getblock64(blocks,i*2+1);
+    // cout << k2 << "\n";
 
     k1 *= c1;
     k1  = ROTL64(k1,31);
@@ -80,6 +83,9 @@ void MurmurHash3_x64_128(const void* key, const int len, const uint32_t seed, ui
     h2 = ROTL64(h2,31);
     h2 += h1;
     h2 = h2*5+0x38495ab5;
+
+    //  cout << "h1:        " << h1 << "\n";
+    //  cout << "h2:        " << h2 << "\n";
   }
 
   //----------
@@ -164,6 +170,8 @@ void insertInHashTable(bitset<BIT_ARRAY_SIZE>& HashTable, char* key, int length)
   MurmurHash3_x64_128(key, length, SEED_VALUE_3, hash3);
   int bit3 = (hash3[0] % BIT_ARRAY_SIZE + hash3[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
   HashTable.set(bit3);
+
+  // cout << "Bits set are: " << bit1 << "," << bit2 << " and " << bit3 << "\n";
 }
 
 
@@ -193,28 +201,43 @@ void checkIfPresent(bitset<BIT_ARRAY_SIZE> HashTable, char* key, int length){
 
 int main(){
 
-  time_t start, end;
-
-  time(&start);
-  bitset<BIT_ARRAY_SIZE> HashTable;
-
+  int lenOfWord = 32;
   string str;
-  int lenOfWord = 70;
-  char *cstr;
-  int numIterations = 500000;
+  int numIterations = 5000000;
 
+  vector<string> wordsToInsert;
   for(int i = 0; i < numIterations; i++){
-    str = genRandomString(lenOfWord);
+      str = genRandomString(lenOfWord);
+      wordsToInsert.push_back(str);
+  }
+
+  char* cstr;
+  bitset<BIT_ARRAY_SIZE> HashTable; 
+
+  // time_t start, end;
+  // time(&start);
+  auto t_start = std::chrono::high_resolution_clock::now();
+
+
+  for(int i = 0; i < numIterations; ++i){
+    str = wordsToInsert[i];
     cstr = new char[lenOfWord + 1];
     strcpy(cstr, str.c_str());
     insertInHashTable(HashTable, cstr, lenOfWord);
-    // cout << HashTable << "\n";
-    // checkIfPresent(HashTable, cstr, len);
   }
 
-  time(&end);
-  double timeTaken = double(end - start);
-  cout << "Time taken for inserting " << numIterations <<  " records in unparallelized version: " << fixed << timeTaken << setprecision(9);
-  cout << "s" << endl;
+    // cout << HashTable << "\n";
+    // checkIfPresent(HashTable, cstr, len);
+  // }
+
+  // time(&end);
+  // double timeTaken = double(end - start);
+  // cout << "Time taken for inserting " << numIterations <<  " records in unparallelized version: " << fixed << timeTaken << setprecision(9);
+  // cout << "s" << endl;
+
+  auto t_end = std::chrono::high_resolution_clock::now();
+  double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end-t_start).count();
+  cout << "Time taken for inserting " << numIterations <<  " records in unparallelized version: " << fixed << elapsed_time_ms << setprecision(9);
+  cout << " ms" << endl;
 
 }
