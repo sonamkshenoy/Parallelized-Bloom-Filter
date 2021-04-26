@@ -29,8 +29,6 @@ using namespace std;
 #define SEED_VALUE_2 58
 #define SEED_VALUE_3 99
 
-typedef __uint64_t uint64_t;
-
 
 const int MAX = 26;
 sem_t semaphore;

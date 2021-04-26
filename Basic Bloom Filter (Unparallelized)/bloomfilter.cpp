@@ -20,8 +20,6 @@ using namespace std;
 #define SEED_VALUE_2 58
 #define SEED_VALUE_3 99
 
-typedef unsigned __int64 uint64_t;
-
 
 const int MAX = 26;
 

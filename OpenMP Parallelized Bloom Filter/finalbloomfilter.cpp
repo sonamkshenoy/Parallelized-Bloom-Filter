@@ -22,7 +22,6 @@ using namespace std;
 #define SEED_VALUE_2 58
 #define SEED_VALUE_3 99
 
-typedef unsigned __int64 uint64_t;
 
 
 const int MAX = 26;
@@ -49,7 +48,7 @@ FORCE_INLINE uint64_t getblock64 ( const uint64_t * p, int i )
   return p[i];
 }
 
-void MurmurHash3_x64_128(const void* key, const int len, const uint32_t seed, uint64_t* hash, uint64_t k1, uint64_t k2, uint64_t k3, uint64_t k4){
+void MurmurHash3_x64_128(const void* key, const int len, const uint32_t seed, uint64_t* hash, uint64_t* kvalues){
 
   const uint8_t* data = (const uint8_t*)key;
   const int nblocks = len/16;
@@ -61,36 +60,24 @@ void MurmurHash3_x64_128(const void* key, const int len, const uint32_t seed, ui
   c2 = BIG_CONSTANT(0x4cf5ad432745937f);
   const uint64_t *blocks = (const uint64_t *)(data);
 
-  h1 ^= k1;
+  uint64_t k1, k2;
 
-  h1 = ROTL64(h1,27);
-  h1 += h2;
-  h1 = h1*5+0x52dce729;
+  for(int i = 0; i < nblocks; i++){
+    k1 = kvalues[i];
+    k2 = kvalues[i+1];
 
-  // cout << "h1:        " << h1 << "\n";
+    h1 ^= k1;
 
+    h1 = ROTL64(h1,27);
+    h1 += h2;
+    h1 = h1*5+0x52dce729;
 
-  h2 ^= k2;
+    h2 ^= k2;
 
-  h2 = ROTL64(h2,31);
-  h2 += h1;
-  h2 = h2*5+0x38495ab5;
-
-  // cout << "h2:        " << h2 << "\n";
-
-  h1 ^= k3;
-
-  h1 = ROTL64(h1,27);
-  h1 += h2;
-  h1 = h1*5+0x52dce729;
-
-
-  h2 ^= k4;
-
-  h2 = ROTL64(h2,31);
-  h2 += h1;
-  h2 = h2*5+0x38495ab5;
-
+    h2 = ROTL64(h2,31);
+    h2 += h1;
+    h2 = h2*5+0x38495ab5;
+  }
 
   //----------
   // tail
@@ -170,43 +157,38 @@ void insertInHashTable(bitset<BIT_ARRAY_SIZE>& HashTable, char* key, int length)
 
   const uint8_t* data = (const uint8_t*)key;
   const int nblocks = length/16;
+  
   uint64_t c1;
   uint64_t c2;
   c1 = BIG_CONSTANT(0x87c37b91114253d5);
   c2 = BIG_CONSTANT(0x4cf5ad432745937f);
   const uint64_t *blocks = (const uint64_t *)(data);
-  int i = 0;
-  uint64_t k1, k2, k3, k4;
-  k1 = getblock64(blocks,i*2+0);
-  k1 *= c1;
-  k1  = ROTL64(k1,31);
-  k1 *= c2;
+   uint64_t kvalues[nblocks*2];
+  uint64_t k1, k2;
 
-  k2 = getblock64(blocks,i*2+1);
-  k2 *= c2;
-  k2  = ROTL64(k2,33);
-  k2 *= c1;
+  for(int i = 0; i < nblocks; i++){
+    k1 = getblock64(blocks,i*2+0);
+    k1 *= c1;
+    k1  = ROTL64(k1,31);
+    k1 *= c2;
 
-  k3 = getblock64(blocks,i*2+2);
-  k3 *= c1;
-  k3  = ROTL64(k3,31);
-  k3 *= c2;
+    k2 = getblock64(blocks,i*2+1);
+    k2 *= c2;
+    k2  = ROTL64(k2,33);
+    k2 *= c1;
 
-  k4 = getblock64(blocks,i*2+3);
-  k4 *= c2;
-  k4  = ROTL64(k4,33);
-  k4 *= c1;
+    kvalues[i] = k1;
+    kvalues[i+1] = k2;
+  }
 
+  MurmurHash3_x64_128(key, length, SEED_VALUE_1, hash1, kvalues);
+  bit1 = (hash1[0] % BIT_ARRAY_SIZE + hash1[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
 
+  MurmurHash3_x64_128(key, length, SEED_VALUE_2, hash2, kvalues);
+  bit2 = (hash2[0] % BIT_ARRAY_SIZE + hash2[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
 
-MurmurHash3_x64_128(key, length, SEED_VALUE_1, hash1, k1, k2, k3, k4);
-bit1 = (hash1[0] % BIT_ARRAY_SIZE + hash1[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
-
-MurmurHash3_x64_128(key, length, SEED_VALUE_2, hash2, k1, k2, k3, k4);
-bit2 = (hash2[0] % BIT_ARRAY_SIZE + hash2[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
-
-MurmurHash3_x64_128(key, length, SEED_VALUE_3, hash3, k1, k2, k3, k4);
-bit3 = (hash3[0] % BIT_ARRAY_SIZE + hash3[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;  
+  MurmurHash3_x64_128(key, length, SEED_VALUE_3, hash3, kvalues);
+  bit3 = (hash3[0] % BIT_ARRAY_SIZE + hash3[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE; 
 
 
   // cout << "Bits set are: " << bit1 << "," << bit2 << " and " << bit3 << "\n";
@@ -250,7 +232,7 @@ int main(){
 
     int lenOfWord = 32;
     string str;
-    int numIterations = 100;
+    int numIterations = 1000;
 
     vector<string> wordsToInsert;
     for(int i = 0; i < numIterations; i++){
