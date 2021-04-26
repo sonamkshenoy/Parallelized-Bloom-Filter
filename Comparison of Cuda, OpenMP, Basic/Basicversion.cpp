@@ -228,9 +228,10 @@ int main(){
 
 
   for(int i = 0; i < numIterations; ++i){
-    str = wordsToInsert[i];
     cstr = new char[lenOfWord + 1];
-    strcpy(cstr, str.c_str());
+    for(int j=0; j<lenOfWord; j++)
+      cstr[j] = wordsToInsert[i*lenOfWord+j];
+    cstr[lenOfWord] = '\0';
     insertInHashTable(HashTable, cstr, lenOfWord);
   }
 

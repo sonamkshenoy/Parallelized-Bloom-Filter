@@ -22,7 +22,7 @@ using namespace std;
 #define SEED_VALUE_2 58
 #define SEED_VALUE_3 99
 
-typedef unsigned __int64 uint64_t;
+typedef __uint64_t uint64_t;
 
 
 const int MAX = 26;
@@ -250,7 +250,7 @@ int main(){
 
     int lenOfWord = 32;
     string str;
-    int numIterations = 1000;
+    int numIterations = 100000;
 
     char wordsToInsert[lenOfWord * numIterations];
 
@@ -280,9 +280,10 @@ int main(){
       
       #pragma omp for
       for(int i = 0; i < numIterations; ++i){
-          str = wordsToInsert[i];
           cstr = new char[lenOfWord + 1];
-          strcpy(cstr, str.c_str()); 
+          for(int j=0; j<lenOfWord; j++)
+            cstr[j] = wordsToInsert[i*lenOfWord+j];
+          cstr[lenOfWord] = '\0';
           insertInHashTable(HashTable, cstr, lenOfWord);
       }
      
