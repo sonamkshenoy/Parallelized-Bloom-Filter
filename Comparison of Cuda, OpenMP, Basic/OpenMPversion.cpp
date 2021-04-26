@@ -10,6 +10,9 @@
 #include <inttypes.h>
 #include <iomanip>
 #include <chrono>
+#include <iostream>
+#include <fstream>
+#include <cstdlib>
 
 using namespace std;
 
@@ -246,11 +249,12 @@ void checkIfPresent(bitset<BIT_ARRAY_SIZE> HashTable, char* key, int length){
   }
 }*/
 
-int main(){
+int main(int argc, char**argv){
 
-    int lenOfWord = 32;
-    string str;
-    int numIterations = 100;
+  int lenOfWord = atoi(argv[1]);
+  string str;
+  int numIterations = atoi(argv[2]);
+
 
     char wordsToInsert[lenOfWord * numIterations];
     int bitArray[3*numIterations];
@@ -297,10 +301,12 @@ int main(){
   //free(HashTable);
   double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end-t_start).count();
   
-  cout << "Time taken for inserting " << numIterations <<  " records in OpenMP parallelized version: " << elapsed_time_ms << setprecision(9);
-  cout << " ms" << endl;
+  // cout << "Time taken for inserting " << numIterations <<  " records in OpenMP parallelized version: " << elapsed_time_ms << setprecision(9);
+  // cout << " ms" << endl;
 
-  return 0;
+  std::ofstream outfile;
+  outfile.open("./Times/openmp_times.txt", std::ios_base::app);
+  outfile << lenOfWord << ":" << numIterations << ":" << elapsed_time_ms << endl;
 
-  
+  return 0;  
 }

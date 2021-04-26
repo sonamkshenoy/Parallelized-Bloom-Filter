@@ -17,6 +17,9 @@
 #include <thrust/device_vector.h>
 #include <cstdio>
 #include <chrono>
+#include <iostream>
+#include <fstream>
+#include <cstdlib>
 
 using namespace std;
 
@@ -283,11 +286,11 @@ __global__ void parallelInsertion(char* d_wordsToInsert, int lenOfWord, int numI
 
 }
 
-int main(){
+int main(int argc, char**argv){
 
-    int lenOfWord = 32;
-    int numIterations = 100;
-    string str;
+  int lenOfWord = atoi(argv[1]);
+  string str;
+  int numIterations = atoi(argv[2]);
 
     char wordsToInsert[lenOfWord * numIterations];
 
@@ -336,8 +339,12 @@ int main(){
     
     double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end-t_start).count();
 
-    cout << "Time taken for inserting " << numIterations <<  " records in CUDA parallelized version: " << elapsed_time_ms << setprecision(9);
-    cout << " ms" << endl;
+    // cout << "Time taken for inserting " << numIterations <<  " records in CUDA parallelized version: " << elapsed_time_ms << setprecision(9);
+    // cout << " ms" << endl;
+
+    std::ofstream outfile;
+    outfile.open("./Times/cuda_times.txt", std::ios_base::app);
+    outfile << lenOfWord << ":" << numIterations << ":" << elapsed_time_ms << endl;
 
     return 0;
 }
