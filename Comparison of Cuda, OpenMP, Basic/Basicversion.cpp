@@ -8,6 +8,7 @@
 #include <inttypes.h>
 #include <iomanip>
 #include <chrono>
+#include <cstdio>
 
 using namespace std;
 
@@ -20,8 +21,7 @@ using namespace std;
 #define SEED_VALUE_2 58
 #define SEED_VALUE_3 99
 
-typedef unsigned __int64 uint64_t;
-
+typedef __uint64_t uint64_t;
 
 const int MAX = 26;
 
@@ -155,26 +155,28 @@ string genRandomString(int n)
     return res; 
 }
 
-void insertInHashTable(int* HashTable, char* key, int length){
+void insertInHashTable(int* bitArray, char* key, int length, int idx){
   
-  // Calculate 3 hashes and insert
-
   uint64_t hash1[2];
   MurmurHash3_x64_128(key, length, SEED_VALUE_1, hash1);
   int bit1 = (hash1[0] % BIT_ARRAY_SIZE + hash1[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
-  HashTable[bit1] = 1;
+
 
   uint64_t hash2[2];
   MurmurHash3_x64_128(key, length, SEED_VALUE_2, hash2);
   int bit2 = (hash2[0] % BIT_ARRAY_SIZE + hash2[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
-  HashTable[bit2] = 1;
+
 
   uint64_t hash3[2];
   MurmurHash3_x64_128(key, length, SEED_VALUE_3, hash3);
   int bit3 = (hash3[0] % BIT_ARRAY_SIZE + hash3[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
-  HashTable[bit3] = 1;
+
 
   // cout << "Bits set are: " << bit1 << "," << bit2 << " and " << bit3 << "\n";
+  bitArray[idx*3+0] = bit1;
+  bitArray[idx*3+1] = bit2;
+  bitArray[idx*3+2] = bit3;
+  //cout << "Set bits: " << bit1 << ", " << bit2 << ", " << bit3 << "\n";
 }
 
 /*
@@ -206,9 +208,10 @@ int main(){
 
   int lenOfWord = 32;
   string str;
-  int numIterations = 1000;
+  int numIterations = 100;
 
   char wordsToInsert[lenOfWord * numIterations];
+  int bitArray[3*numIterations];
 
   for(int i = 0; i < numIterations; i++){
       str = genRandomString(lenOfWord);
@@ -222,7 +225,7 @@ int main(){
 
 
   char* cstr;
-  int* HashTable = (int*)calloc(BIT_ARRAY_SIZE, sizeof(int));
+  //int* HashTable = (int*)calloc(BIT_ARRAY_SIZE, sizeof(int));
 
   auto t_start = std::chrono::high_resolution_clock::now();
 
@@ -232,12 +235,15 @@ int main(){
     for(int j=0; j<lenOfWord; j++)
       cstr[j] = wordsToInsert[i*lenOfWord+j];
     cstr[lenOfWord] = '\0';
-    insertInHashTable(HashTable, cstr, lenOfWord);
+    insertInHashTable(bitArray, cstr, lenOfWord, i);
   }
 
   auto t_end = std::chrono::high_resolution_clock::now();
   double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end-t_start).count();
+
   cout << "Time taken for inserting " << numIterations <<  " records in unparallelized version: " << elapsed_time_ms << setprecision(9);
   cout << " ms" << endl;
+
+  return 0;
 
 }

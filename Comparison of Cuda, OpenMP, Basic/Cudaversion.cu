@@ -163,7 +163,7 @@ string genRandomString(int n)
     return res; 
 } 
 
-__device__ void insertInHashTable(int* d_HashTable, char* key, int length){
+__device__ void insertInHashTable(char* key, int length, int* d_bitArray, int idx){
   
   // Calculate 3 hashes and insert
   uint64_t hash1[2];
@@ -218,9 +218,19 @@ bit3 = (hash3[0] % BIT_ARRAY_SIZE + hash3[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
   // cout << "Bits set are: " << bit1 << "," << bit2 << " and " << bit3 << "\n";
 
 
-  d_HashTable[bit1] = 1;
-  d_HashTable[bit2] = 1;
-  d_HashTable[bit3] = 1;
+  // d_HashTable[bit1] = 1;
+  // d_HashTable[bit2] = 1;
+  // d_HashTable[bit3] = 1;
+
+  
+  d_bitArray[idx*3+0] = bit1;
+  d_bitArray[idx*3+1] = bit2;
+  d_bitArray[idx*3+2] = bit3;
+
+  // printf("bit array at %d: %d\n", idx, bit1);
+  // printf("bit array at %d: %d\n", idx+1, bit2);
+  // printf("bit array at %d: %d\n", idx+2, bit3);
+  
 
   //cout << "Set bits: " << bit1 << ", " << bit2 << ", " << bit3 << "\n";
 }
@@ -261,14 +271,14 @@ __device__ char* getword(char* d_wordsToInsert, int idx, int lenOfWord){
   return temp;
 }
 
-__global__ void parallelInsertion(char* d_wordsToInsert, int lenOfWord, int *d_HashTable, int numIterations){
+__global__ void parallelInsertion(char* d_wordsToInsert, int lenOfWord, int numIterations, int* d_bitArray){
   
   int idx = threadIdx.x + blockIdx.x * blockDim.x;
   int gridStride = blockDim.x * gridDim.x;
 
   for(int i=idx; i<numIterations; i += gridStride){
     char* cstr = getword(d_wordsToInsert, idx, lenOfWord);
-    insertInHashTable(d_HashTable, cstr, lenOfWord);
+    insertInHashTable(cstr, lenOfWord, d_bitArray, idx);
   }
 
 }
@@ -276,7 +286,7 @@ __global__ void parallelInsertion(char* d_wordsToInsert, int lenOfWord, int *d_H
 int main(){
 
     int lenOfWord = 32;
-    int numIterations = 100000;
+    int numIterations = 100;
     string str;
 
     char wordsToInsert[lenOfWord * numIterations];
@@ -291,35 +301,43 @@ int main(){
       }
     }
 
+    int bitArray[3*numIterations];
+    int* d_bitArray;
+    cudaMalloc((void**)&d_bitArray, 3*numIterations*sizeof(int));
+    cudaMemcpy(d_bitArray, bitArray, 3*numIterations*sizeof(int), cudaMemcpyHostToDevice);
+
     char* d_wordsToInsert;
     cudaMalloc((void**)&d_wordsToInsert, lenOfWord*numIterations*sizeof(char));
     cudaMemcpy(d_wordsToInsert, wordsToInsert, lenOfWord*numIterations*sizeof(char), cudaMemcpyHostToDevice);
 
-    int* HashTable = (int*)calloc(BIT_ARRAY_SIZE, sizeof(int));
-    int* d_HashTable;
-    cudaMalloc((void**)&d_HashTable, BIT_ARRAY_SIZE*sizeof(int));
-    cudaMemset(d_HashTable, 0, BIT_ARRAY_SIZE*sizeof(int));
+    // int* HashTable = (int*)calloc(BIT_ARRAY_SIZE, sizeof(int));
+    // int* d_HashTable;
+    // cudaMalloc((void**)&d_HashTable, BIT_ARRAY_SIZE*sizeof(int));
+    // cudaMemset(d_HashTable, 0, BIT_ARRAY_SIZE*sizeof(int));
 
-    cudaMemcpy(d_HashTable, HashTable, BIT_ARRAY_SIZE*sizeof(int), cudaMemcpyHostToDevice);
+    // cudaMemcpy(d_HashTable, HashTable, BIT_ARRAY_SIZE*sizeof(int), cudaMemcpyHostToDevice);
 
     //time and call function here
     auto t_start = std::chrono::high_resolution_clock::now();
    
-    parallelInsertion<<<1024, 1024>>>(d_wordsToInsert, lenOfWord, d_HashTable, numIterations);
+    parallelInsertion<<<1, 100>>>(d_wordsToInsert, lenOfWord, numIterations, d_bitArray);
     cudaDeviceSynchronize();
     
     auto t_end = std::chrono::high_resolution_clock::now();
 
-    
 
-    cudaMemcpy(HashTable, d_HashTable, BIT_ARRAY_SIZE*sizeof(int), cudaMemcpyDeviceToHost);
+    cudaMemcpy(bitArray, d_bitArray, 3*numIterations*sizeof(int), cudaMemcpyDeviceToHost);
     
-    cudaFree(d_HashTable);
+    // cudaFree(d_HashTable);
     cudaFree(d_wordsToInsert);
-   
-  
-  double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end-t_start).count();
+    cudaFree(d_bitArray);
 
-  cout << "Time taken for inserting " << numIterations <<  " records in Cuda parallelized version: " << elapsed_time_ms << setprecision(9);
-  cout << " ms" << endl;
+    //free(HashTable);
+    
+    double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end-t_start).count();
+
+    cout << "Time taken for inserting " << numIterations <<  " records in CUDA parallelized version: " << elapsed_time_ms << setprecision(9);
+    cout << " ms" << endl;
+
+    return 0;
 }

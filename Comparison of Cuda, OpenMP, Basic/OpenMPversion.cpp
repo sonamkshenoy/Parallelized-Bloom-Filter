@@ -157,7 +157,7 @@ string genRandomString(int n)
     return res; 
 } 
 
-void insertInHashTable(int* HashTable, char* key, int length){
+void insertInHashTable(int* bitArray, char* key, int length, int idx){
   
   // Calculate 3 hashes and insert
   uint64_t hash1[2];
@@ -212,9 +212,9 @@ bit3 = (hash3[0] % BIT_ARRAY_SIZE + hash3[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
   // cout << "Bits set are: " << bit1 << "," << bit2 << " and " << bit3 << "\n";
 
 
-  HashTable[bit1] = 1;
-  HashTable[bit2] = 1;
-  HashTable[bit3] = 1;
+  bitArray[idx*3+0] = bit1;
+  bitArray[idx*3+1] = bit2;
+  bitArray[idx*3+2] = bit3;
 
 
   //cout << "Set bits: " << bit1 << ", " << bit2 << ", " << bit3 << "\n";
@@ -250,9 +250,10 @@ int main(){
 
     int lenOfWord = 32;
     string str;
-    int numIterations = 100000;
+    int numIterations = 100;
 
     char wordsToInsert[lenOfWord * numIterations];
+    int bitArray[3*numIterations];
 
     for(int i = 0; i < numIterations; i++){
         str = genRandomString(lenOfWord);
@@ -266,7 +267,7 @@ int main(){
 
 
     char* cstr;
-    int* HashTable = (int*)calloc(BIT_ARRAY_SIZE, sizeof(int));
+    // int* HashTable = (int*)calloc(BIT_ARRAY_SIZE, sizeof(int));
 
     auto t_start = std::chrono::high_resolution_clock::now(), t_end = std::chrono::high_resolution_clock::now();
     
@@ -284,7 +285,7 @@ int main(){
           for(int j=0; j<lenOfWord; j++)
             cstr[j] = wordsToInsert[i*lenOfWord+j];
           cstr[lenOfWord] = '\0';
-          insertInHashTable(HashTable, cstr, lenOfWord);
+          insertInHashTable(bitArray, cstr, lenOfWord, i);
       }
      
       #pragma omp single
@@ -293,8 +294,13 @@ int main(){
       }
     }
   
+  //free(HashTable);
   double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end-t_start).count();
-
-  cout << "Time taken for inserting " << numIterations <<  " records in Openmp parallelized version: " << elapsed_time_ms << setprecision(9);
+  
+  cout << "Time taken for inserting " << numIterations <<  " records in OpenMP parallelized version: " << elapsed_time_ms << setprecision(9);
   cout << " ms" << endl;
+
+  return 0;
+
+  
 }
