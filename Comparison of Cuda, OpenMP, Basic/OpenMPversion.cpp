@@ -1,4 +1,4 @@
-#include "bloomfilter.h"
+# include "bloomfilter.h"
 #include <stdlib.h>
 #include <iostream>
 #include <semaphore.h>
@@ -157,7 +157,7 @@ string genRandomString(int n)
     return res; 
 } 
 
-void insertInHashTable(bitset<BIT_ARRAY_SIZE>& HashTable, char* key, int length){
+void insertInHashTable(int* HashTable, char* key, int length){
   
   // Calculate 3 hashes and insert
   uint64_t hash1[2];
@@ -212,9 +212,9 @@ bit3 = (hash3[0] % BIT_ARRAY_SIZE + hash3[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
   // cout << "Bits set are: " << bit1 << "," << bit2 << " and " << bit3 << "\n";
 
 
-  HashTable.set(bit1);
-  HashTable.set(bit2);
-  HashTable.set(bit3);
+  HashTable[bit1] = 1;
+  HashTable[bit2] = 1;
+  HashTable[bit3] = 1;
 
 
   //cout << "Set bits: " << bit1 << ", " << bit2 << ", " << bit3 << "\n";
@@ -250,17 +250,23 @@ int main(){
 
     int lenOfWord = 32;
     string str;
-    int numIterations = 100;
+    int numIterations = 1000;
 
-    vector<string> wordsToInsert;
+    char wordsToInsert[lenOfWord * numIterations];
+
     for(int i = 0; i < numIterations; i++){
         str = genRandomString(lenOfWord);
-        wordsToInsert.push_back(str);
+        char* cstr = new char[lenOfWord + 1];
+        strcpy(cstr, str.c_str());
+
+        for(int j = 0; j < lenOfWord; j++){
+            wordsToInsert[i*lenOfWord+j] = cstr[j];
+      }
     }
 
 
     char* cstr;
-    bitset<BIT_ARRAY_SIZE> HashTable; 
+    int* HashTable = (int*)calloc(BIT_ARRAY_SIZE, sizeof(int));
 
     auto t_start = std::chrono::high_resolution_clock::now(), t_end = std::chrono::high_resolution_clock::now();
     
@@ -288,6 +294,6 @@ int main(){
   
   double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end-t_start).count();
 
-  cout << "Time taken for inserting " << numIterations <<  " records in Openmp parallelized version: " << fixed << elapsed_time_ms << setprecision(9);
+  cout << "Time taken for inserting " << numIterations <<  " records in Openmp parallelized version: " << elapsed_time_ms << setprecision(9);
   cout << " ms" << endl;
 }

@@ -1,14 +1,4 @@
-#define _MURMURHASH3_H_
-#include <cstdint>
-
-typedef unsigned int uint32_t;
-typedef unsigned char uint8_t;
-typedef __uint64_t uint64_t;
-
-// Arguments (word to be hashed, length of the key, a seed, the array of two 64 integers storing final hash value)
-__device__ void MurmurHash3_x64_128(const void* key, int len, uint32_t seed, uint64_t* hash);
-
-// # include "bloomfilter.h"
+#include "bloomfilter.h"
 #include <stdlib.h>
 #include <iostream>
 #include <semaphore.h>
@@ -38,6 +28,9 @@ using namespace std;
 #define SEED_VALUE_1 27
 #define SEED_VALUE_2 58
 #define SEED_VALUE_3 99
+
+typedef __uint64_t uint64_t;
+
 
 const int MAX = 26;
 sem_t semaphore;
