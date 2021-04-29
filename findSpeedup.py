@@ -1,5 +1,5 @@
 f_basic = open("./Times/basic_times.txt")
-f_openmp = open("./Times/openmp_times.txt")
+f_openmp = open("./Times/cuda_times.txt")
 
 basic = f_basic.read().split('\n')
 openmp = f_openmp.read().split('\n')

@@ -64,7 +64,7 @@ for wordLen in numLengths:
 
     plt.figure()
     plt.plot(x, y_basic, label = "Basic")
-    plt.plot(x, y_openmp, label = "OpenMP")
+    #plt.plot(x, y_openmp, label = "OpenMP")
     plt.plot(x, y_cuda, label="CUDA")
     plt.legend()
     plt.title("Word Length: " + str(wordLen))
