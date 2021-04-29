@@ -63,8 +63,8 @@ void MurmurHash3_x64_128(const void* key, const int len, const uint32_t seed, ui
   uint64_t k1, k2;
 
   for(int i = 0; i < nblocks; i++){
-    k1 = kvalues[i];
-    k2 = kvalues[i+1];
+    k1 = kvalues[i*2 + 0];
+    k2 = kvalues[i*2 + 1];
 
     h1 ^= k1;
 
@@ -177,8 +177,8 @@ void insertInHashTable(bitset<BIT_ARRAY_SIZE>& HashTable, char* key, int length)
     k2  = ROTL64(k2,33);
     k2 *= c1;
 
-    kvalues[i] = k1;
-    kvalues[i+1] = k2;
+    kvalues[i*2 + 0] = k1;
+    kvalues[i*2 + 1] = k2;
   }
 
   MurmurHash3_x64_128(key, length, SEED_VALUE_1, hash1, kvalues);

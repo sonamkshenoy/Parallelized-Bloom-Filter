@@ -47,7 +47,7 @@ FORCE_INLINE uint64_t getblock64 ( const uint64_t * p, int i )
   return p[i];
 }
 
-void MurmurHash3_x64_128(const void* key, const int len, const uint32_t seed, uint64_t* hash){
+void MurmurHash3_x64_128(const void* key, const int len, const uint32_t seed, uint64_t* hash, uint64_t* kvalues){
 
   const uint8_t* data = (const uint8_t*)key;
   
@@ -64,32 +64,23 @@ void MurmurHash3_x64_128(const void* key, const int len, const uint32_t seed, ui
 
   const uint64_t *blocks = (const uint64_t *)(data);
 
-  for(int i = 0; i < nblocks; i++){
-    uint64_t k1 = getblock64(blocks,i*2+0);
-    // cout << k1 << "\n";
-    uint64_t k2 = getblock64(blocks,i*2+1);
-    // cout << k2 << "\n";
+  uint64_t k1, k2;
 
-    k1 *= c1;
-    k1  = ROTL64(k1,31);
-    k1 *= c2;
+  for(int i = 0; i < nblocks; i++){
+    k1 = kvalues[i*2 + 0];
+    k2 = kvalues[i*2 + 1];
+
     h1 ^= k1;
 
     h1 = ROTL64(h1,27);
     h1 += h2;
     h1 = h1*5+0x52dce729;
 
-    k2 *= c2;
-    k2  = ROTL64(k2,33);
-    k2 *= c1;
     h2 ^= k2;
 
     h2 = ROTL64(h2,31);
     h2 += h1;
     h2 = h2*5+0x38495ab5;
-
-    //  cout << "h1:        " << h1 << "\n";
-    //  cout << "h2:        " << h2 << "\n";
   }
 
   //----------
@@ -97,8 +88,10 @@ void MurmurHash3_x64_128(const void* key, const int len, const uint32_t seed, ui
 
   const uint8_t * tail = (const uint8_t*)(data + nblocks*16);
 
-  uint64_t k1 = 0;
-  uint64_t k2 = 0;
+  // uint64_t 
+  k1 = 0;
+  // uint64_t 
+  k2 = 0;
 
   switch(len & 15){
     case 15: k2 ^= ((uint64_t)tail[14]) << 48;
@@ -158,19 +151,51 @@ string genRandomString(int n)
 
 void insertInHashTable(int* bitArray, char* key, int length, int idx){
   
+// Calculate 3 hashes and insert
   uint64_t hash1[2];
-  MurmurHash3_x64_128(key, length, SEED_VALUE_1, hash1);
-  int bit1 = (hash1[0] % BIT_ARRAY_SIZE + hash1[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
-
-
   uint64_t hash2[2];
-  MurmurHash3_x64_128(key, length, SEED_VALUE_2, hash2);
-  int bit2 = (hash2[0] % BIT_ARRAY_SIZE + hash2[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
-
-
   uint64_t hash3[2];
-  MurmurHash3_x64_128(key, length, SEED_VALUE_3, hash3);
-  int bit3 = (hash3[0] % BIT_ARRAY_SIZE + hash3[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
+  int bit1, bit2, bit3;
+
+
+
+
+  const uint8_t* data = (const uint8_t*)key;
+  const int nblocks = length/16;
+
+  uint64_t c1;
+  uint64_t c2;
+  c1 = BIG_CONSTANT(0x87c37b91114253d5);
+  c2 = BIG_CONSTANT(0x4cf5ad432745937f);
+  const uint64_t *blocks = (const uint64_t *)(data);
+  uint64_t k1, k2;
+
+  uint64_t kvalues[nblocks*2];
+
+  for(int i = 0; i < nblocks; i++){
+    k1 = getblock64(blocks,i*2+0);
+    k1 *= c1;
+    k1  = ROTL64(k1,31);
+    k1 *= c2;
+
+    k2 = getblock64(blocks,i*2+1);
+    k2 *= c2;
+    k2  = ROTL64(k2,33);
+    k2 *= c1;
+
+    kvalues[i*2 + 0] = k1;
+    kvalues[i*2 + 1] = k2;
+  }
+
+  MurmurHash3_x64_128(key, length, SEED_VALUE_1, hash1, kvalues);
+  bit1 = (hash1[0] % BIT_ARRAY_SIZE + hash1[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
+
+  MurmurHash3_x64_128(key, length, SEED_VALUE_2, hash2, kvalues);
+  bit2 = (hash2[0] % BIT_ARRAY_SIZE + hash2[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
+
+  MurmurHash3_x64_128(key, length, SEED_VALUE_3, hash3, kvalues);
+  bit3 = (hash3[0] % BIT_ARRAY_SIZE + hash3[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;  
+
 
 
   // cout << "Bits set are: " << bit1 << "," << bit2 << " and " << bit3 << "\n";
