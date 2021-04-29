@@ -163,7 +163,7 @@ void insertInHashTable(bitset<BIT_ARRAY_SIZE>& HashTable, char* key, int length)
   c1 = BIG_CONSTANT(0x87c37b91114253d5);
   c2 = BIG_CONSTANT(0x4cf5ad432745937f);
   const uint64_t *blocks = (const uint64_t *)(data);
-   uint64_t kvalues[nblocks*2];
+  uint64_t kvalues[nblocks*2];
   uint64_t k1, k2;
 
   for(int i = 0; i < nblocks; i++){
