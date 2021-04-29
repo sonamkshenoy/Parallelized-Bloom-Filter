@@ -1,5 +1,5 @@
 # Parallelized-Bloom-Filter
-A parallelized bloom filter with distributed cache
+A parallelized bloom filter!
 
 
 ## References
