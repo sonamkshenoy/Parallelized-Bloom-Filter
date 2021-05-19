@@ -267,8 +267,8 @@ __global__ void parallelInsertion(char* d_wordsToInsert, int lenOfWord, int numI
   int gridStride = blockDim.x * gridDim.x;
 
   for(int i=idx; i<numIterations; i += gridStride){
-    char* cstr = getword(d_wordsToInsert, idx, lenOfWord);
-    insertInHashTable(cstr, lenOfWord, d_bitArray, idx, d_kvalues);
+    char* cstr = getword(d_wordsToInsert, i, lenOfWord);
+    insertInHashTable(cstr, lenOfWord, d_bitArray, i, d_kvalues);
   }
 
 }
@@ -315,7 +315,7 @@ int main(int argc, char**argv){
     //time and call function here
     auto t_start = std::chrono::high_resolution_clock::now();
    
-    parallelInsertion<<<1, 100>>>(d_wordsToInsert, lenOfWord, numIterations, d_bitArray, d_kvalues);
+    parallelInsertion<<<65536, 1024>>>(d_wordsToInsert, lenOfWord, numIterations, d_bitArray, d_kvalues);
     cudaDeviceSynchronize();
     
     auto t_end = std::chrono::high_resolution_clock::now();
