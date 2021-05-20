@@ -21,6 +21,7 @@
 #include <fstream>
 #include <cstdlib>
 #include <string>
+#include <cuda_profiler_api.h>
 
 using namespace std;
 
@@ -275,6 +276,8 @@ int main(int argc, char**argv){
   int lenOfWord = atoi(argv[1]);
   string str;
   int numIterations = atoi(argv[2]);
+  int numBlocks = atoi(argv[3]);
+  int numThreads = atoi(argv[4]);
 
 
   char wordsToInsert[lenOfWord * numIterations];
@@ -302,7 +305,7 @@ int main(int argc, char**argv){
   //time and call function here
   auto t_start = std::chrono::high_resolution_clock::now();
  
-  parallelInsertion<<<65536, 1024>>>(d_wordsToInsert, lenOfWord, numIterations, d_bitArray);
+  parallelInsertion<<<numBlocks, numThreads>>>(d_wordsToInsert, lenOfWord, numIterations, d_bitArray);
   cudaDeviceSynchronize();
   
   auto t_end = std::chrono::high_resolution_clock::now();
@@ -315,6 +318,7 @@ int main(int argc, char**argv){
   // cudaFree(d_HashTable);
   cudaFree(d_wordsToInsert);
   cudaFree(d_bitArray);
+  cudaProfilerStop();
   //cudaFree(d_kvalues);
 
   //free(HashTable);
@@ -328,7 +332,7 @@ int main(int argc, char**argv){
 
   std::ofstream outfile;
   outfile.open("./Times/cuda_times.txt", std::ios_base::app);
-  outfile << lenOfWord << ":" << numIterations << ":" << elapsed_time_ms << endl;
+  outfile << lenOfWord << ":" << numIterations << ":" << numBlocks << ":" << numThreads << ":" << elapsed_time_ms << endl;
 
   return 0;
 }

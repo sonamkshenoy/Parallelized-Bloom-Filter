@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import matplotlib.pyplot as plt
 
 def buildDict(logs_type):
@@ -7,7 +8,7 @@ def buildDict(logs_type):
     for logs in logs_type:
         arr = logs.split(":")
         wordLen = int(arr[0])
-        time = float(arr[2])
+        time = float(arr[-1])
 
         if wordLen not in type_dict:
             type_dict[wordLen] = []
@@ -16,22 +17,19 @@ def buildDict(logs_type):
     
 
 
-numIterations = [512, 1024, 10000, 20000, 40000, 70000, 80000, 100000]
-numLengths = [10, 32, 71]
+numIterations = [512, 1024, 10000, 20000, 40000, 60000, 80000, 100000]
+numLengths = [10, 32, 70]
 
 for length in numLengths:
     for iteration in numIterations:
-        print("running: ", length, " ", iteration, "\n")
-        basic = "./Basic.o " + str(length) + " " + str(iteration)
-        print(basic)
-        os.system(basic)
-        openmp = "./Openmp.o " + str(length) + " " + str(iteration) + " " + str(4)
-        print(openmp)
-        os.system(openmp)
-        cuda = "./Cuda.o " + str(length) + " " + str(iteration)
-        print(cuda)
+        #print("running: ", length, " ", iteration, "\n")
+        openmp = "./Openmp.o " + str(length) + " " + str(iteration) + " " + str(8)
+        basic = "./Basic.o " + str(length) + " " + str(iteration)  
+        cuda = "./Cuda.o " + str(length) + " " + str(iteration) + " " + str(100) + " " + str(512)
+        #print(basic)
         os.system(cuda)
-        #print("\n")
+        os.system(openmp)
+        os.system(basic)
 
 #Read  text files and plot here
 #Basic plot

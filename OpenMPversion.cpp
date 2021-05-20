@@ -264,7 +264,7 @@ int main(int argc, char**argv){
   
   t_start = std::chrono::high_resolution_clock::now();
     
-  #pragma omp for
+  #pragma omp parallel for
   for(int i = 0; i < numIterations; ++i){
       cstr = new char[lenOfWord + 1];
       for(int j=0; j<lenOfWord; j++)
