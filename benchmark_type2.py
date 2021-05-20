@@ -2,6 +2,7 @@ import os
 import sys
 import matplotlib.pyplot as plt
 import multiprocessing
+import time
 
 
 # Fix number of iterations
@@ -33,3 +34,7 @@ for wordSize in wordSizes:
         # cuda = "./Cuda.o " + str(wordSize) + " " + str(fixedNumIterations)
         # os.system(cuda)
         #print("\n")
+
+
+    # Wait for a few seconds for resources to get freed
+    time.sleep(5)

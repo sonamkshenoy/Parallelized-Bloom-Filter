@@ -4,8 +4,6 @@ f_openmp = open("./Times/openmp_times.txt")
 basic = f_basic.read().split('\n')
 openmp = f_openmp.read().split('\n')
 
-print(basic)
-print(openmp)
 
 basic_sorted_by_numIterations = dict()
 openmp_sorted_by_numIterations = dict()
@@ -25,15 +23,13 @@ for j in openmp:
 
 		openmp_sorted_by_numIterations[int(toks[1])][int(toks[2])] = float(toks[3])
 
-print(basic_sorted_by_numIterations)
-print(openmp_sorted_by_numIterations)
 
 
 f_basic.close()
 f_openmp.close()
 
 speedups = {}
-numIterations = 0;
+fixedWordSize = basic[0].split(":")[0];
 
 
 # Find average for fixed number of iterations
@@ -57,6 +53,8 @@ for numIteration in basic_sorted_by_numIterations:
 
 		speedups[numIteration][num_cores] = speedup
 
+
+print("Speedups for fixed word size = ", fixedWordSize)
 
 for i in speedups:
 	for j in speedups[i]:

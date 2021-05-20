@@ -22,15 +22,12 @@ for j in openmp:
 
 		openmp_sorted_by_wordsize[int(toks[0])][int(toks[2])] = float(toks[3])
 
-print(basic_sorted_by_wordsize)
-print(openmp_sorted_by_wordsize)
-
 
 f_basic.close()
 f_openmp.close()
 
 speedups = {}
-numIterations = 0;
+fixednumIterations = basic[0].split(":")[1];
 
 
 # Find average for fixed number of iterations
@@ -54,6 +51,8 @@ for wordsize in basic_sorted_by_wordsize:
 
 		speedups[wordsize][num_cores] = speedup
 
+
+print("Speedups for fixed number of iterations = ", fixednumIterations)
 
 for i in speedups:
 	for j in speedups[i]:

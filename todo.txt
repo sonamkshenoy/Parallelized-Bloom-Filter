@@ -1,0 +1,4 @@
+1. Measurements for cuda
+2. Graphs
+3. Set bits in bitarray
+4. Convert to vector and string for efficiency (copying might take time)
