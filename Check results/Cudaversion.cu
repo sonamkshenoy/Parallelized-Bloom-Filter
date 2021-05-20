@@ -20,6 +20,7 @@
 #include <iostream>
 #include <fstream>
 #include <cstdlib>
+#include <string>
 
 using namespace std;
 
@@ -279,65 +280,68 @@ int main(int argc, char**argv){
   string str;
   int numIterations = atoi(argv[2]);
 
-    char wordsToInsert[lenOfWord * numIterations];
 
-    for(int i = 0; i < numIterations; i++){
-        str = genRandomString(lenOfWord);
-        char* cstr = new char[lenOfWord + 1];
-        strcpy(cstr, str.c_str());
+  vector<string> wordsToInserts{"meahkbmqbhcdarzx", "wkkyhiddqscwlkob", "cwfrxsjybldbefsa", "rcbynecdyggxxpkd", "orellnmpapqfwkho", "pkmcoqhnwnkuewhs", "qmgbbuqcljjivswm", "dkqtbxixmvtrrblj", "ptnsnfwzqfjmafad", "rrwsofsbcnuvqhff", "bsaqxwpqcacehchz", "vfrkmlnozjkpqpxr", "jxkitzyxacbhhkic", "qcoendtomfgdwdwf", "cgpxiqvkuytdlcgd", "ewhtaciohordtqkv", "wcsgspqoqmsboagu", "wnnyqxnzlgdgwpbt", "rwblnsadeuguumoq", "cdrubetokyxhoach", "wdvmxxrdryxlmndq", "tukwagmlabcdefgh", "bxubumenryxlmndq", "ydiajxlsmeyatdrm", "lvihjouvsuyoypay", "ulyeimuotehzriic", "fskpggkbbipzzrzu", "cxamludfykgruowz", "giooobppleqlwpha", "pjnadqhdcnvwdtxj", "bmyppphauxnspusg", "dhiixqmbfjxjcvud", "jsuyibyebmwsiwpo", "ygyxymzevypzvjeg", "ebeocfuftsxdixti", "gsieehkchzdflilr", "jqfnxztqrsvbspky", "hsenbppkqtpddbuo", "tbbqcwivrfxjujjd", "dntgeiqvdgaijvwc", "yaubwewpjvygehlj", "xepbpiwuqzdzubdu", "bzvafspqpqwuzifw", "ovyddwyvvburczmg", "yjgfdxvtnunnesls", "plwuiupfxlzbknhk", "wppanltcfirjcdds", "ozoyvegurfwcsfmo", "xeqmrjowrghdxrjb", "awlrbgccnaehhsve"};
 
-        for(int j = 0; j < lenOfWord; j++){
-            wordsToInsert[i*lenOfWord+j] = cstr[j];
-      }
+  char wordsToInsert[lenOfWord * numIterations];
+
+  for(int i = 0; i < numIterations; i++){
+      str = wordsToInsert[i];
+      char* cstr = new char[lenOfWord + 1];
+      strcpy(cstr, str.c_str());
+
+      for(int j = 0; j < lenOfWord; j++){
+          wordsToInsert[i*lenOfWord+j] = cstr[j];
     }
+  }
 
-    uint64_t kvalues[lenOfWord/16 * 2];
-    uint64_t* d_kvalues;
-    cudaMalloc((void**)&d_kvalues, lenOfWord/16*2*sizeof(uint64_t));
-    cudaMemcpy(d_kvalues, kvalues, lenOfWord/16*2*sizeof(uint64_t), cudaMemcpyHostToDevice);
+  uint64_t kvalues[lenOfWord/16 * 2];
+  uint64_t* d_kvalues;
+  cudaMalloc((void**)&d_kvalues, lenOfWord/16*2*sizeof(uint64_t));
+  cudaMemcpy(d_kvalues, kvalues, lenOfWord/16*2*sizeof(uint64_t), cudaMemcpyHostToDevice);
 
-    int bitArray[3*numIterations];
-    int* d_bitArray;
-    cudaMalloc((void**)&d_bitArray, 3*numIterations*sizeof(int));
-    cudaMemcpy(d_bitArray, bitArray, 3*numIterations*sizeof(int), cudaMemcpyHostToDevice);
+  int bitArray[3*numIterations];
+  int* d_bitArray;
+  cudaMalloc((void**)&d_bitArray, 3*numIterations*sizeof(int));
+  cudaMemcpy(d_bitArray, bitArray, 3*numIterations*sizeof(int), cudaMemcpyHostToDevice);
 
-    char* d_wordsToInsert;
-    cudaMalloc((void**)&d_wordsToInsert, lenOfWord*numIterations*sizeof(char));
-    cudaMemcpy(d_wordsToInsert, wordsToInsert, lenOfWord*numIterations*sizeof(char), cudaMemcpyHostToDevice);
+  char* d_wordsToInsert;
+  cudaMalloc((void**)&d_wordsToInsert, lenOfWord*numIterations*sizeof(char));
+  cudaMemcpy(d_wordsToInsert, wordsToInsert, lenOfWord*numIterations*sizeof(char), cudaMemcpyHostToDevice);
 
-    // int* HashTable = (int*)calloc(BIT_ARRAY_SIZE, sizeof(int));
-    // int* d_HashTable;
-    // cudaMalloc((void**)&d_HashTable, BIT_ARRAY_SIZE*sizeof(int));
-    // cudaMemset(d_HashTable, 0, BIT_ARRAY_SIZE*sizeof(int));
+  // int* HashTable = (int*)calloc(BIT_ARRAY_SIZE, sizeof(int));
+  // int* d_HashTable;
+  // cudaMalloc((void**)&d_HashTable, BIT_ARRAY_SIZE*sizeof(int));
+  // cudaMemset(d_HashTable, 0, BIT_ARRAY_SIZE*sizeof(int));
 
-    // cudaMemcpy(d_HashTable, HashTable, BIT_ARRAY_SIZE*sizeof(int), cudaMemcpyHostToDevice);
+  // cudaMemcpy(d_HashTable, HashTable, BIT_ARRAY_SIZE*sizeof(int), cudaMemcpyHostToDevice);
 
-    //time and call function here
-    auto t_start = std::chrono::high_resolution_clock::now();
-   
-    parallelInsertion<<<65536, 1024>>>(d_wordsToInsert, lenOfWord, numIterations, d_bitArray, d_kvalues);
-    cudaDeviceSynchronize();
-    
-    auto t_end = std::chrono::high_resolution_clock::now();
+  //time and call function here
+  auto t_start = std::chrono::high_resolution_clock::now();
+ 
+  parallelInsertion<<<65536, 1024>>>(d_wordsToInsert, lenOfWord, numIterations, d_bitArray, d_kvalues);
+  cudaDeviceSynchronize();
+  
+  auto t_end = std::chrono::high_resolution_clock::now();
 
 
-    cudaMemcpy(bitArray, d_bitArray, 3*numIterations*sizeof(int), cudaMemcpyDeviceToHost);
-    
-    // cudaFree(d_HashTable);
-    cudaFree(d_wordsToInsert);
-    cudaFree(d_bitArray);
-    cudaFree(d_kvalues);
+  cudaMemcpy(bitArray, d_bitArray, 3*numIterations*sizeof(int), cudaMemcpyDeviceToHost);
+  
+  // cudaFree(d_HashTable);
+  cudaFree(d_wordsToInsert);
+  cudaFree(d_bitArray);
+  cudaFree(d_kvalues);
 
-    //free(HashTable);
-    
-    double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end-t_start).count();
+  //free(HashTable);
+  
+  double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end-t_start).count();
 
-    // cout << "Time taken for inserting " << numIterations <<  " records in CUDA parallelized version: " << elapsed_time_ms << setprecision(9);
-    // cout << " ms" << endl;
+  // cout << "Time taken for inserting " << numIterations <<  " records in CUDA parallelized version: " << elapsed_time_ms << setprecision(9);
+  // cout << " ms" << endl;
 
-    std::ofstream outfile;
-    outfile.open("./Times/cuda_times.txt", std::ios_base::app);
-    outfile << lenOfWord << ":" << numIterations << ":" << elapsed_time_ms << endl;
+  std::ofstream outfile;
+  outfile.open("./Times/cuda_times.txt", std::ios_base::app);
+  outfile << lenOfWord << ":" << numIterations << ":" << elapsed_time_ms << endl;
 
-    return 0;
+  return 0;
 }

@@ -252,18 +252,20 @@ int main(int argc, char**argv){
 
   */
 
-  vector<string> wordsToInsert{"awlrbbmqbhcdarzx", "wkkyhiddqscdxrjb", "cwfrxsjybldbefsa", "rcbynecdyggxxpkd", "orellnmpapqfwkho", "pkmcoqhnwnkuewhs", 
-  "qmgbbuqcljjivswm", "dkqtbxixmvtrrblj", "ptnsnfwzqfjmafad", "rrwsofsbcnuvqhff", "bsaqxwpqcacehchz", "vfrkmlnozjkpqpxr", 
-  "jxkitzyxacbhhkic", "qcoendtomfgdwdwf", "cgpxiqvkuytdlcgd", "ewhtaciohordtqkv", "wcsgspqoqmsboagu", "wnnyqxnzlgdgwpbt", "rwblnsadeuguumoq", 
-  "cdrubetokyxhoach", "wdvmxxrdryxlmndq", "tukwagmlejuukwci", "bxubumenmeyatdrm", "ydiajxloghiqfmzh", "lvihjouvsuyoypay", "ulyeimuotehzriic", 
-  "fskpggkbbipzzrzu", "cxamludfykgruowz", "giooobppleqlwpha", "pjnadqhdcnvwdtxj", "bmyppphauxnspusg", "dhiixqmbfjxjcvud", "jsuyibyebmwsiwpo", 
-  "ygyxymzevypzvjeg", "ebeocfuftsxdixti", "gsieehkchzdflilr", "jqfnxztqrsvbspky", "hsenbppkqtpddbuo", "tbbqcwivrfxjujjd", "dntgeiqvdgaijvwc", 
-  "yaubwewpjvygehlj", "xepbpiwuqzdzubdu", "bzvafspqpqwuzifw", "ovyddwyvvburczmg", "yjgfdxvtnunnesls", "plwuiupfxlzbknhk", "wppanltcfirjcdds", 
-  "ozoyvegurfwcsfmo", "xeqmrjowrghwlkob", "meahkgccnaehhsve"};
+  vector<string> wordsToInserts{"meahkbmqbhcdarzx", "wkkyhiddqscwlkob", "cwfrxsjybldbefsa", "rcbynecdyggxxpkd", "orellnmpapqfwkho", "pkmcoqhnwnkuewhs", "qmgbbuqcljjivswm", "dkqtbxixmvtrrblj", "ptnsnfwzqfjmafad", "rrwsofsbcnuvqhff", "bsaqxwpqcacehchz", "vfrkmlnozjkpqpxr", "jxkitzyxacbhhkic", "qcoendtomfgdwdwf", "cgpxiqvkuytdlcgd", "ewhtaciohordtqkv", "wcsgspqoqmsboagu", "wnnyqxnzlgdgwpbt", "rwblnsadeuguumoq", "cdrubetokyxhoach", "wdvmxxrdryxlmndq", "tukwagmlabcdefgh", "bxubumenryxlmndq", "ydiajxlsmeyatdrm", "lvihjouvsuyoypay", "ulyeimuotehzriic", "fskpggkbbipzzrzu", "cxamludfykgruowz", "giooobppleqlwpha", "pjnadqhdcnvwdtxj", "bmyppphauxnspusg", "dhiixqmbfjxjcvud", "jsuyibyebmwsiwpo", "ygyxymzevypzvjeg", "ebeocfuftsxdixti", "gsieehkchzdflilr", "jqfnxztqrsvbspky", "hsenbppkqtpddbuo", "tbbqcwivrfxjujjd", "dntgeiqvdgaijvwc", "yaubwewpjvygehlj", "xepbpiwuqzdzubdu", "bzvafspqpqwuzifw", "ovyddwyvvburczmg", "yjgfdxvtnunnesls", "plwuiupfxlzbknhk", "wppanltcfirjcdds", "ozoyvegurfwcsfmo", "xeqmrjowrghdxrjb", "awlrbgccnaehhsve"};
 
-
+  char wordsToInsert[lenOfWord * numIterations];
   int bitArray[3*numIterations];
 
+  for(int i = 0; i < numIterations; i++){
+      str = wordsToInserts[i];
+      char* cstr = new char[lenOfWord + 1];
+      strcpy(cstr, str.c_str());
+
+      for(int j = 0; j < lenOfWord; j++){
+          wordsToInsert[i*lenOfWord+j] = cstr[j];
+    }
+  }
 
   auto t_start = std::chrono::high_resolution_clock::now();
 
