@@ -252,7 +252,14 @@ int main(int argc, char**argv){
 
   */
 
-  vector<string> wordsToInsert{"nwlrbbmqbhcdarzo", "wkkyhiddqscdxrjm", "owfrxsjybldbefsa", "rcbynecdyggxxpkl", "orellnmpapqfwkho", "pkmcoqhnwnkuewhs", "qmgbbuqcljjivswm", "dkqtbxixmvtrrblj", "ptnsnfwzqfjmafad", "rrwsofsbcnuvqhff", "bsaqxwpqcacehchz", "vfrkmlnozjkpqpxr", "jxkitzyxacbhhkic", "qcoendtomfgdwdwf", "cgpxiqvkuytdlcgd", "ewhtaciohordtqkv", "wcsgspqoqmsboagu", "wnnyqxnzlgdgwpbt", "rwblnsadeuguumoq", "cdrubetokyxhoach", "wdvmxxrdryxlmndq", "tukwagmlejuukwci", "bxubumenmeyatdrm", "ydiajxloghiqfmzh", "lvihjouvsuyoypay", "ulyeimuotehzriic", "fskpggkbbipzzrzu", "cxamludfykgruowz", "giooobppleqlwpha", "pjnadqhdcnvwdtxj", "bmyppphauxnspusg", "dhiixqmbfjxjcvud", "jsuyibyebmwsiqyo", "ygyxymzevypzvjeg", "ebeocfuftsxdixti", "gsieehkchzdflilr", "jqfnxztqrsvbspky", "hsenbppkqtpddbuo", "tbbqcwivrfxjujjd", "dntgeiqvdgaijvwc", "yaubwewpjvygehlj", "xepbpiwuqzdzubdu", "bzvafspqpqwuzifw", "ovyddwyvvburczmg", "yjgfdxvtnunnesls", "plwuiupfxlzbknhk", "wppanltcfirjcdds", "ozoyvegurfwcsfmo", "xeqmrjowrghwlkob", "meahkgccnaehhsve"};
+  vector<string> wordsToInsert{"awlrbbmqbhcdarzx", "wkkyhiddqscdxrjb", "cwfrxsjybldbefsa", "rcbynecdyggxxpkd", "orellnmpapqfwkho", "pkmcoqhnwnkuewhs", 
+  "qmgbbuqcljjivswm", "dkqtbxixmvtrrblj", "ptnsnfwzqfjmafad", "rrwsofsbcnuvqhff", "bsaqxwpqcacehchz", "vfrkmlnozjkpqpxr", 
+  "jxkitzyxacbhhkic", "qcoendtomfgdwdwf", "cgpxiqvkuytdlcgd", "ewhtaciohordtqkv", "wcsgspqoqmsboagu", "wnnyqxnzlgdgwpbt", "rwblnsadeuguumoq", 
+  "cdrubetokyxhoach", "wdvmxxrdryxlmndq", "tukwagmlejuukwci", "bxubumenmeyatdrm", "ydiajxloghiqfmzh", "lvihjouvsuyoypay", "ulyeimuotehzriic", 
+  "fskpggkbbipzzrzu", "cxamludfykgruowz", "giooobppleqlwpha", "pjnadqhdcnvwdtxj", "bmyppphauxnspusg", "dhiixqmbfjxjcvud", "jsuyibyebmwsiwpo", 
+  "ygyxymzevypzvjeg", "ebeocfuftsxdixti", "gsieehkchzdflilr", "jqfnxztqrsvbspky", "hsenbppkqtpddbuo", "tbbqcwivrfxjujjd", "dntgeiqvdgaijvwc", 
+  "yaubwewpjvygehlj", "xepbpiwuqzdzubdu", "bzvafspqpqwuzifw", "ovyddwyvvburczmg", "yjgfdxvtnunnesls", "plwuiupfxlzbknhk", "wppanltcfirjcdds", 
+  "ozoyvegurfwcsfmo", "xeqmrjowrghwlkob", "meahkgccnaehhsve"};
 
 
   int bitArray[3*numIterations];
@@ -272,7 +279,7 @@ int main(int argc, char**argv){
   double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end-t_start).count();
 
   for(auto e:bitArray){
-    cout << e;
+    cout << e << endl;
   }
   
   // cout << "Time taken for inserting " << numIterations <<  " records in unparallelized version: " << elapsed_time_ms << setprecision(9);

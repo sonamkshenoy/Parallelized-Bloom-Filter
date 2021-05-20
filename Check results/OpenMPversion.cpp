@@ -240,7 +240,7 @@ int main(int argc, char**argv){
   int numThreads = atoi(argv[3]);
 
 
-  vector<string> wordsToInsert{"nwlrbbmqbhcdarzo", "wkkyhiddqscdxrjm", "owfrxsjybldbefsa", "rcbynecdyggxxpkl", "orellnmpapqfwkho", "pkmcoqhnwnkuewhs", "qmgbbuqcljjivswm", "dkqtbxixmvtrrblj", "ptnsnfwzqfjmafad", "rrwsofsbcnuvqhff", "bsaqxwpqcacehchz", "vfrkmlnozjkpqpxr", "jxkitzyxacbhhkic", "qcoendtomfgdwdwf", "cgpxiqvkuytdlcgd", "ewhtaciohordtqkv", "wcsgspqoqmsboagu", "wnnyqxnzlgdgwpbt", "rwblnsadeuguumoq", "cdrubetokyxhoach", "wdvmxxrdryxlmndq", "tukwagmlejuukwci", "bxubumenmeyatdrm", "ydiajxloghiqfmzh", "lvihjouvsuyoypay", "ulyeimuotehzriic", "fskpggkbbipzzrzu", "cxamludfykgruowz", "giooobppleqlwpha", "pjnadqhdcnvwdtxj", "bmyppphauxnspusg", "dhiixqmbfjxjcvud", "jsuyibyebmwsiqyo", "ygyxymzevypzvjeg", "ebeocfuftsxdixti", "gsieehkchzdflilr", "jqfnxztqrsvbspky", "hsenbppkqtpddbuo", "tbbqcwivrfxjujjd", "dntgeiqvdgaijvwc", "yaubwewpjvygehlj", "xepbpiwuqzdzubdu", "bzvafspqpqwuzifw", "ovyddwyvvburczmg", "yjgfdxvtnunnesls", "plwuiupfxlzbknhk", "wppanltcfirjcdds", "ozoyvegurfwcsfmo", "xeqmrjowrghwlkob", "meahkgccnaehhsve"};
+  vector<string> wordsToInsert{"awlrbbmqbhcdarzx", "wkkyhiddqscdxrjb", "cwfrxsjybldbefsa", "rcbynecdyggxxpkd", "orellnmpapqfwkho", "pkmcoqhnwnkuewhs", "qmgbbuqcljjivswm", "dkqtbxixmvtrrblj", "ptnsnfwzqfjmafad", "rrwsofsbcnuvqhff", "bsaqxwpqcacehchz", "vfrkmlnozjkpqpxr", "jxkitzyxacbhhkic", "qcoendtomfgdwdwf", "cgpxiqvkuytdlcgd", "ewhtaciohordtqkv", "wcsgspqoqmsboagu", "wnnyqxnzlgdgwpbt", "rwblnsadeuguumoq", "cdrubetokyxhoach", "wdvmxxrdryxlmndq", "tukwagmlejuukwci", "bxubumenmeyatdrm", "ydiajxloghiqfmzh", "lvihjouvsuyoypay", "ulyeimuotehzriic", "fskpggkbbipzzrzu", "cxamludfykgruowz", "giooobppleqlwpha", "pjnadqhdcnvwdtxj", "bmyppphauxnspusg", "dhiixqmbfjxjcvud", "jsuyibyebmwsiwpo", "ygyxymzevypzvjeg", "ebeocfuftsxdixti", "gsieehkchzdflilr", "jqfnxztqrsvbspky", "hsenbppkqtpddbuo", "tbbqcwivrfxjujjd", "dntgeiqvdgaijvwc", "yaubwewpjvygehlj", "xepbpiwuqzdzubdu", "bzvafspqpqwuzifw", "ovyddwyvvburczmg", "yjgfdxvtnunnesls", "plwuiupfxlzbknhk", "wppanltcfirjcdds", "ozoyvegurfwcsfmo", "xeqmrjowrghwlkob", "meahkgccnaehhsve"};
 
   int bitArray[3*numIterations];
 
@@ -252,12 +252,7 @@ int main(int argc, char**argv){
 
   omp_set_dynamic(0);    
   omp_set_num_threads(numThreads); 
-  #pragma omp parallel
-  {
-    #pragma omp single
-    {
       t_start = std::chrono::high_resolution_clock::now();
-    }
     
     #pragma omp for
     for(int i = 0; i < numIterations; ++i){
@@ -267,16 +262,14 @@ int main(int argc, char**argv){
       insertInHashTable(bitArray, cstr, lenOfWord, i);
     }
     
-    #pragma omp single
-    {
+
       t_end = std::chrono::high_resolution_clock::now();
-    }
-  }
+    
   
   //free(HashTable);
 
   for(auto e:bitArray){
-    cout << e;
+    cout << e << endl;
   }
 
   double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end-t_start).count();
