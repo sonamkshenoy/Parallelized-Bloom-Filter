@@ -235,7 +235,6 @@ int main(int argc, char**argv){
   int lenOfWord = atoi(argv[1]);
   string str;
   int numIterations = atoi(argv[2]);
-  int numThreads = atoi(argv[3]);
 
 
   char wordsToInsert[lenOfWord * numIterations];
@@ -258,8 +257,6 @@ int main(int argc, char**argv){
   auto t_start = std::chrono::high_resolution_clock::now(), t_end = std::chrono::high_resolution_clock::now();
   
 
-  omp_set_dynamic(0);    
-  omp_set_num_threads(numThreads); 
   #pragma omp parallel
   {
     #pragma omp single
@@ -291,7 +288,7 @@ int main(int argc, char**argv){
 
   std::ofstream outfile;
   outfile.open("./Times/openmp_times.txt", std::ios_base::app);
-  outfile << lenOfWord << ":" << numIterations << ":" << numThreads << ":" << elapsed_time_ms << endl;
+  outfile << lenOfWord << ":" << numIterations << ":" << elapsed_time_ms << endl;
 
   return 0;  
 }

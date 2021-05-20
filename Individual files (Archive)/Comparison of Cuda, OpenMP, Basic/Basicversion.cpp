@@ -1,15 +1,14 @@
-# include "bloomfilter.h"
+#include "bloomfilter.h"
 #include <stdlib.h>
 #include <iostream>
-#include <semaphore.h>
 #include <vector>
 #include <bitset>
 #include <cstring>
 #include <ctime>
-#include <omp.h>
 #include <inttypes.h>
 #include <iomanip>
 #include <chrono>
+#include <cstdio>
 #include <iostream>
 #include <fstream>
 #include <cstdlib>
@@ -26,7 +25,6 @@ using namespace std;
 #define SEED_VALUE_3 99
 
 const int MAX = 26;
-sem_t semaphore;
 
 inline uint64_t rotl64(uint64_t x, int8_t r){
   return (x << r) | (x >> (64 - r));
@@ -52,13 +50,18 @@ FORCE_INLINE uint64_t getblock64 ( const uint64_t * p, int i )
 void MurmurHash3_x64_128(const void* key, const int len, const uint32_t seed, uint64_t* hash, uint64_t* kvalues){
 
   const uint8_t* data = (const uint8_t*)key;
+  
   const int nblocks = len/16;
+
   uint64_t h1 = seed;
   uint64_t h2 = seed;
-  uint64_t c1;
-  uint64_t c2;
-  c1 = BIG_CONSTANT(0x87c37b91114253d5);
-  c2 = BIG_CONSTANT(0x4cf5ad432745937f);
+
+  const uint64_t c1 = BIG_CONSTANT(0x87c37b91114253d5);
+  const uint64_t c2 = BIG_CONSTANT(0x4cf5ad432745937f);
+
+  //------------
+  // body
+
   const uint64_t *blocks = (const uint64_t *)(data);
 
   uint64_t k1, k2;
@@ -87,7 +90,7 @@ void MurmurHash3_x64_128(const void* key, const int len, const uint32_t seed, ui
 
   // uint64_t 
   k1 = 0;
-  //uint64_t 
+  // uint64_t 
   k2 = 0;
 
   switch(len & 15){
@@ -125,6 +128,8 @@ void MurmurHash3_x64_128(const void* key, const int len, const uint32_t seed, ui
   h1 += h2;
   h2 += h1;
 
+  int k = 20000;
+
   ((uint64_t*)hash)[0] = h1;
   ((uint64_t*)hash)[1] = h2;
 
@@ -138,16 +143,15 @@ string genRandomString(int n)
                           'v', 'w', 'x', 'y', 'z' }; 
   
     string res = ""; 
-
     for (int i = 0; i < n; i++)  
         res = res + alphabet[rand() % MAX]; 
       
     return res; 
-} 
+}
 
 void insertInHashTable(int* bitArray, char* key, int length, int idx){
   
-  // Calculate 3 hashes and insert
+// Calculate 3 hashes and insert
   uint64_t hash1[2];
   uint64_t hash2[2];
   uint64_t hash3[2];
@@ -193,17 +197,13 @@ void insertInHashTable(int* bitArray, char* key, int length, int idx){
   bit3 = (hash3[0] % BIT_ARRAY_SIZE + hash3[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;  
 
 
+
   // cout << "Bits set are: " << bit1 << "," << bit2 << " and " << bit3 << "\n";
-
-
   bitArray[idx*3+0] = bit1;
   bitArray[idx*3+1] = bit2;
   bitArray[idx*3+2] = bit3;
-
-
   //cout << "Set bits: " << bit1 << ", " << bit2 << ", " << bit3 << "\n";
 }
-
 
 /*
 void checkIfPresent(bitset<BIT_ARRAY_SIZE> HashTable, char* key, int length){
@@ -235,63 +235,46 @@ int main(int argc, char**argv){
   int lenOfWord = atoi(argv[1]);
   string str;
   int numIterations = atoi(argv[2]);
-  int numThreads = atoi(argv[3]);
 
 
   char wordsToInsert[lenOfWord * numIterations];
   int bitArray[3*numIterations];
 
   for(int i = 0; i < numIterations; i++){
-    str = genRandomString(lenOfWord);
-    char* cstr = new char[lenOfWord + 1];
-    strcpy(cstr, str.c_str());
+      str = genRandomString(lenOfWord);
+      char* cstr = new char[lenOfWord + 1];
+      strcpy(cstr, str.c_str());
 
-    for(int j = 0; j < lenOfWord; j++){
-      wordsToInsert[i*lenOfWord+j] = cstr[j];
+      for(int j = 0; j < lenOfWord; j++){
+          wordsToInsert[i*lenOfWord+j] = cstr[j];
     }
   }
 
 
   char* cstr;
-  // int* HashTable = (int*)calloc(BIT_ARRAY_SIZE, sizeof(int));
+  //int* HashTable = (int*)calloc(BIT_ARRAY_SIZE, sizeof(int));
 
-  auto t_start = std::chrono::high_resolution_clock::now(), t_end = std::chrono::high_resolution_clock::now();
-  
+  auto t_start = std::chrono::high_resolution_clock::now();
 
-  omp_set_dynamic(0);    
-  omp_set_num_threads(numThreads); 
-  #pragma omp parallel
-  {
-    #pragma omp single
-    {
-      t_start = std::chrono::high_resolution_clock::now();
-    }
-    
-    #pragma omp for
-    for(int i = 0; i < numIterations; ++i){
-      cstr = new char[lenOfWord + 1];
-      for(int j=0; j<lenOfWord; j++)
-        cstr[j] = wordsToInsert[i*lenOfWord+j];
-      cstr[lenOfWord] = '\0';
-      insertInHashTable(bitArray, cstr, lenOfWord, i);
-    }
-    
-    #pragma omp single
-    {
-      t_end = std::chrono::high_resolution_clock::now();
-    }
+
+  for(int i = 0; i < numIterations; ++i){
+    cstr = new char[lenOfWord + 1];
+    for(int j=0; j<lenOfWord; j++)
+      cstr[j] = wordsToInsert[i*lenOfWord+j];
+    cstr[lenOfWord] = '\0';
+    insertInHashTable(bitArray, cstr, lenOfWord, i);
   }
-  
-  //free(HashTable);
 
+  auto t_end = std::chrono::high_resolution_clock::now();
   double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end-t_start).count();
-  
-  // cout << "Time taken for inserting " << numIterations <<  " records in OpenMP parallelized version: " << elapsed_time_ms << setprecision(9);
+
+  // cout << "Time taken for inserting " << numIterations <<  " records in unparallelized version: " << elapsed_time_ms << setprecision(9);
   // cout << " ms" << endl;
 
   std::ofstream outfile;
-  outfile.open("./Times/openmp_times.txt", std::ios_base::app);
-  outfile << lenOfWord << ":" << numIterations << ":" << numThreads << ":" << elapsed_time_ms << endl;
+  outfile.open("./Times/basic_times.txt", std::ios_base::app);
+  outfile << lenOfWord << ":" << numIterations << ":" << elapsed_time_ms << endl;
 
-  return 0;  
+  return 0;
+
 }
