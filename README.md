@@ -5,6 +5,10 @@ An accelerated bloom filter
 
 
 # Commands to execute  
+To plot comparison between openmp, cuda and srial versions
+```
+make
+```
 
 To plot speedups for i) Fixed number of iterations ii) Varying word size iii) Varying number of cores
 ```
