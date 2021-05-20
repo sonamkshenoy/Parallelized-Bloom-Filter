@@ -5,7 +5,7 @@ An accelerated bloom filter
 
 
 # Commands to execute  
-To plot comparison between openmp, cuda and srial versions
+To plot comparison between openmp, cuda and serial versions
 ```
 make
 ```
