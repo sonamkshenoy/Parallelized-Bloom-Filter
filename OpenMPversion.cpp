@@ -13,6 +13,7 @@
 #include <iostream>
 #include <fstream>
 #include <cstdlib>
+#include <string>
 
 using namespace std;
 
@@ -234,25 +235,25 @@ int main(int argc, char**argv){
 
   int lenOfWord = atoi(argv[1]);
   string str;
+  char* cstr;
   int numIterations = atoi(argv[2]);
   int numThreads = atoi(argv[3]);
 
 
-  char wordsToInsert[lenOfWord * numIterations];
   int bitArray[3*numIterations];
+  char wordsToInsert[lenOfWord * numIterations];
 
   for(int i = 0; i < numIterations; i++){
-    str = genRandomString(lenOfWord);
-    char* cstr = new char[lenOfWord + 1];
-    strcpy(cstr, str.c_str());
+      str = genRandomString(lenOfWord);
+      char* cstr = new char[lenOfWord + 1];
+      strcpy(cstr, str.c_str());
 
-    for(int j = 0; j < lenOfWord; j++){
-      wordsToInsert[i*lenOfWord+j] = cstr[j];
+      for(int j = 0; j < lenOfWord; j++){
+          wordsToInsert[i*lenOfWord+j] = cstr[j];
     }
   }
 
 
-  char* cstr;
   // int* HashTable = (int*)calloc(BIT_ARRAY_SIZE, sizeof(int));
 
   auto t_start = std::chrono::high_resolution_clock::now(), t_end = std::chrono::high_resolution_clock::now();
@@ -260,29 +261,27 @@ int main(int argc, char**argv){
 
   omp_set_dynamic(0);    
   omp_set_num_threads(numThreads); 
-  #pragma omp parallel
-  {
-    #pragma omp single
-    {
-      t_start = std::chrono::high_resolution_clock::now();
-    }
+  
+  t_start = std::chrono::high_resolution_clock::now();
     
-    #pragma omp for
-    for(int i = 0; i < numIterations; ++i){
+  #pragma omp for
+  for(int i = 0; i < numIterations; ++i){
       cstr = new char[lenOfWord + 1];
       for(int j=0; j<lenOfWord; j++)
         cstr[j] = wordsToInsert[i*lenOfWord+j];
       cstr[lenOfWord] = '\0';
       insertInHashTable(bitArray, cstr, lenOfWord, i);
-    }
-    
-    #pragma omp single
-    {
-      t_end = std::chrono::high_resolution_clock::now();
-    }
   }
+    
+
+  t_end = std::chrono::high_resolution_clock::now();
+    
   
   //free(HashTable);
+
+  // for(auto e:bitArray){
+  //   cout << e << endl;
+  // }
 
   double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end-t_start).count();
   

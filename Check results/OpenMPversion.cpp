@@ -60,7 +60,7 @@ void MurmurHash3_x64_128(const void* key, const int len, const uint32_t seed, ui
   uint64_t c2;
   c1 = BIG_CONSTANT(0x87c37b91114253d5);
   c2 = BIG_CONSTANT(0x4cf5ad432745937f);
-  const uint64_t *blocks = (const uint64_t *)(data);
+  //const uint64_t *blocks = (const uint64_t *)(data);
 
   uint64_t k1, k2;
 
@@ -201,7 +201,9 @@ void insertInHashTable(int* bitArray, char* key, int length, int idx){
   bitArray[idx*3+1] = bit2;
   bitArray[idx*3+2] = bit3;
 
-
+  printf("bit array at %d: %d\n", idx*3+0, bit1);
+  printf("bit array at %d: %d\n", idx*3+1, bit2);
+  printf("bit array at %d: %d\n", idx*3+2, bit3);
   //cout << "Set bits: " << bit1 << ", " << bit2 << ", " << bit3 << "\n";
 }
 
@@ -255,7 +257,6 @@ int main(int argc, char**argv){
     }
   }
 
-
   // int* HashTable = (int*)calloc(BIT_ARRAY_SIZE, sizeof(int));
 
   auto t_start = std::chrono::high_resolution_clock::now(), t_end = std::chrono::high_resolution_clock::now();
@@ -267,21 +268,19 @@ int main(int argc, char**argv){
     
   #pragma omp for
   for(int i = 0; i < numIterations; ++i){
-    str = wordsToInsert[i];
-    cstr = new char[lenOfWord + 1];
-    strcpy(cstr, str.c_str());
-    insertInHashTable(bitArray, cstr, lenOfWord, i);
-  }
+      cstr = new char[lenOfWord + 1];
+      for(int j=0; j<lenOfWord; j++)
+        cstr[j] = wordsToInsert[i*lenOfWord+j];
+      cstr[lenOfWord] = '\0';
+      printf("Word being inserted: %s at i: %d\n", cstr, i);
+      insertInHashTable(bitArray, cstr, lenOfWord, i);
+    }
     
 
   t_end = std::chrono::high_resolution_clock::now();
     
   
   //free(HashTable);
-
-  for(auto e:bitArray){
-    cout << e << endl;
-  }
 
   double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end-t_start).count();
   

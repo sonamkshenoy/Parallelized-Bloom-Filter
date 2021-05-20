@@ -12,6 +12,7 @@
 #include <iostream>
 #include <fstream>
 #include <cstdlib>
+#include <string>
 
 using namespace std;
 
@@ -234,11 +235,26 @@ int main(int argc, char**argv){
 
   int lenOfWord = atoi(argv[1]);
   string str;
+  char* cstr;
   int numIterations = atoi(argv[2]);
 
 
-  char wordsToInsert[lenOfWord * numIterations];
+  /*
+  // V.IMP. DON'T DELETE
+  vector<string> wordsToInsert;
+  cout << '{';
+  for(int i=0; i<numIterations;++i){
+    string s = genRandomString(lenOfWord);
+    cout << '"' << s << '"' << ", ";
+    wordsToInsert.push_back(s);
+  }
+  cout << "};";
+
+  */
+
+
   int bitArray[3*numIterations];
+  char wordsToInsert[lenOfWord * numIterations];
 
   for(int i = 0; i < numIterations; i++){
       str = genRandomString(lenOfWord);
@@ -250,24 +266,24 @@ int main(int argc, char**argv){
     }
   }
 
-
-  char* cstr;
-  //int* HashTable = (int*)calloc(BIT_ARRAY_SIZE, sizeof(int));
-
   auto t_start = std::chrono::high_resolution_clock::now();
 
-
   for(int i = 0; i < numIterations; ++i){
-    cstr = new char[lenOfWord + 1];
-    for(int j=0; j<lenOfWord; j++)
-      cstr[j] = wordsToInsert[i*lenOfWord+j];
-    cstr[lenOfWord] = '\0';
-    insertInHashTable(bitArray, cstr, lenOfWord, i);
+      cstr = new char[lenOfWord + 1];
+      for(int j=0; j<lenOfWord; j++)
+        cstr[j] = wordsToInsert[i*lenOfWord+j];
+      cstr[lenOfWord] = '\0';
+      insertInHashTable(bitArray, cstr, lenOfWord, i);
   }
 
   auto t_end = std::chrono::high_resolution_clock::now();
   double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end-t_start).count();
 
+
+  // for(auto e:bitArray){
+  //   cout << e << endl;
+  // }
+  
   // cout << "Time taken for inserting " << numIterations <<  " records in unparallelized version: " << elapsed_time_ms << setprecision(9);
   // cout << " ms" << endl;
 
