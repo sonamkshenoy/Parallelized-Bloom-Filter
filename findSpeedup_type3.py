@@ -32,8 +32,8 @@ speedups = {}
 fixedWordSize = basic[0].split(":")[0];
 
 
-# Find average for fixed number of iterations
-# Vary word length and number of cores per each
+# Find average for fixed word size
+# Vary number of iterations and number of cores per each
 
 for numIteration in basic_sorted_by_numIterations:
 

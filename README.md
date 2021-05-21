@@ -7,7 +7,9 @@ An accelerated bloom filter
 # Commands to execute  
 To plot comparison between openmp, cuda and serial versions
 ```
-make
+make  
+python3 benchmark.py  
+python3 findSpeedup.py
 ```
 
 To plot speedups for i) Fixed number of iterations ii) Varying word size iii) Varying number of cores

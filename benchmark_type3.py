@@ -7,8 +7,8 @@ import time
 
 # Fix word size
 # Vary number of iterations and number of cores
-fixedWordSize = 70
-numIterations = [30, 50, 80]
+fixedWordSize = 10
+numIterations = [100000, 200000, 300000]
 
 # Find number of cpu cores in system
 numOfCores = multiprocessing.cpu_count()
@@ -37,4 +37,4 @@ for numIteration in numIterations:
 
 
     # Wait for a few seconds for resources to get freed
-    time.sleep(5)
+    time.sleep(10)

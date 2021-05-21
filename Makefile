@@ -5,8 +5,7 @@ all:
 	rm -f Cuda.o
 	g++ Basicversion.cpp -o Basic.o
 	g++ OpenMPversion.cpp -fopenmp -o Openmp.o
-	nvcc Cudaversion.cu -o Cuda.o
-	python3 benchmark.py
+# 	nvcc Cudaversion.cu -o Cuda.o
 
 clean:
 	rm *.o
