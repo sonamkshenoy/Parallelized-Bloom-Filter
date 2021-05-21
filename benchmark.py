@@ -17,15 +17,15 @@ def buildDict(logs_type):
     
 
 
-numIterations = [512, 1024, 10000, 20000, 40000, 60000, 80000, 100000]
-numLengths = [10, 32, 70]
+numIterations = [512, 1024, 10000, 20000, 50000, 100000, 150000, 200000, 250000, 300000, 350000, 370000]
+numLengths = [10]
 
 for length in numLengths:
     for iteration in numIterations:
         #print("running: ", length, " ", iteration, "\n")
         openmp = "./Openmp.o " + str(length) + " " + str(iteration) + " " + str(8)
         basic = "./Basic.o " + str(length) + " " + str(iteration)  
-        cuda = "./Cuda.o " + str(length) + " " + str(iteration) + " " + str(100) + " " + str(512)
+        cuda = "./Cuda.o " + str(length) + " " + str(iteration) + " " + str(100) + " " + str(500)
         #print(basic)
         os.system(cuda)
         os.system(openmp)
@@ -64,14 +64,11 @@ for wordLen in numLengths:
     y_cuda = cuda_dict[wordLen]
 
     plt.figure()
-    plt.plot(x, y_basic, marker="D", label = "Basic")
-    plt.plot(x, y_openmp, marker="D", label = "OpenMP")
-    plt.plot(x, y_cuda, marker="D", label="CUDA")
+    plt.plot(x, y_basic, marker="x", label = "Basic")
+    plt.plot(x, y_openmp, marker="x", label = "OpenMP")
+    plt.plot(x, y_cuda, marker="x", label="CUDA")
     plt.legend()
     plt.title("Word Length: " + str(wordLen))
     plt.xlabel("Number of Iterations")
     plt.ylabel("Time in ms")
 plt.show()
-
-
-
