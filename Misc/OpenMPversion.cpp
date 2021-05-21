@@ -201,9 +201,9 @@ void insertInHashTable(int* bitArray, char* key, int length, int idx){
   bitArray[idx*3+1] = bit2;
   bitArray[idx*3+2] = bit3;
 
-  printf("bit array at %d: %d\n", idx*3+0, bit1);
-  printf("bit array at %d: %d\n", idx*3+1, bit2);
-  printf("bit array at %d: %d\n", idx*3+2, bit3);
+  // printf("bit array at %d: %d\n", idx*3+0, bit1);
+  // printf("bit array at %d: %d\n", idx*3+1, bit2);
+  // printf("bit array at %d: %d\n", idx*3+2, bit3);
   //cout << "Set bits: " << bit1 << ", " << bit2 << ", " << bit3 << "\n";
 }
 
@@ -249,11 +249,9 @@ int main(int argc, char**argv){
 
   for(int i = 0; i < numIterations; i++){
       str = wordsToInserts[i];
-      char* cstr = new char[lenOfWord + 1];
-      strcpy(cstr, str.c_str());
-
+      
       for(int j = 0; j < lenOfWord; j++){
-          wordsToInsert[i*lenOfWord+j] = cstr[j];
+          wordsToInsert[i*lenOfWord+j] = str[j];
     }
   }
 
@@ -272,7 +270,7 @@ int main(int argc, char**argv){
       for(int j=0; j<lenOfWord; j++)
         cstr[j] = wordsToInsert[i*lenOfWord+j];
       cstr[lenOfWord] = '\0';
-      printf("Word being inserted: %s at i: %d\n", cstr, i);
+      // printf("Word being inserted: %s at i: %d\n", cstr, i);
       insertInHashTable(bitArray, cstr, lenOfWord, i);
     }
     
@@ -284,6 +282,9 @@ int main(int argc, char**argv){
 
   double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end-t_start).count();
   
+  for(auto e:bitArray){
+    cout << e << endl;
+  }
   // cout << "Time taken for inserting " << numIterations <<  " records in OpenMP parallelized version: " << elapsed_time_ms << setprecision(9);
   // cout << " ms" << endl;
 

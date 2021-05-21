@@ -1,22 +1,14 @@
 #include "bloomfilter.h"
 #include <stdlib.h>
 #include <iostream>
-#include <semaphore.h>
 #include <vector>
 #include <bitset>
 #include <cstring>
 #include <ctime>
-#include <omp.h>
 #include <inttypes.h>
 #include <iomanip>
-#include <iomanip>
-#include <cuda.h>
-#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
-#include <thrust/host_vector.h>
-#include <thrust/device_vector.h>
-#include <cstdio>
 #include <chrono>
+#include <cstdio>
 #include <iostream>
 #include <fstream>
 #include <cstdlib>
@@ -33,15 +25,13 @@ using namespace std;
 #define SEED_VALUE_2 58
 #define SEED_VALUE_3 99
 
-
 const int MAX = 26;
-sem_t semaphore;
 
-__device__ inline uint64_t rotl64(uint64_t x, int8_t r){
+inline uint64_t rotl64(uint64_t x, int8_t r){
   return (x << r) | (x >> (64 - r));
 }
 
-__device__ FORCE_INLINE uint64_t fmix64 ( uint64_t k )
+FORCE_INLINE uint64_t fmix64 ( uint64_t k )
 {
   k ^= k >> 33;
   k *= BIG_CONSTANT(0xff51afd7ed558ccd);
@@ -53,28 +43,33 @@ __device__ FORCE_INLINE uint64_t fmix64 ( uint64_t k )
 }
 
 
-__device__ FORCE_INLINE uint64_t getblock64 ( const uint64_t * p, int i )
+FORCE_INLINE uint64_t getblock64 ( const uint64_t * p, int i )
 {
   return p[i];
 }
 
-__device__ void MurmurHash3_x64_128(const void* key, const int len, const uint32_t seed, uint64_t* hash, uint64_t* d_kvalues){
+void MurmurHash3_x64_128(const void* key, const int len, const uint32_t seed, uint64_t* hash, uint64_t* kvalues){
 
   const uint8_t* data = (const uint8_t*)key;
+  
   const int nblocks = len/16;
+
   uint64_t h1 = seed;
   uint64_t h2 = seed;
-  uint64_t c1;
-  uint64_t c2;
-  c1 = BIG_CONSTANT(0x87c37b91114253d5);
-  c2 = BIG_CONSTANT(0x4cf5ad432745937f);
-  //const uint64_t *blocks = (const uint64_t *)(data);
+
+  const uint64_t c1 = BIG_CONSTANT(0x87c37b91114253d5);
+  const uint64_t c2 = BIG_CONSTANT(0x4cf5ad432745937f);
+
+  //------------
+  // body
+
+  const uint64_t *blocks = (const uint64_t *)(data);
 
   uint64_t k1, k2;
 
   for(int i = 0; i < nblocks; i++){
-    k1 = d_kvalues[i*2 + 0];
-    k2 = d_kvalues[i*2 + 1];
+    k1 = kvalues[i*2 + 0];
+    k2 = kvalues[i*2 + 1];
 
     h1 ^= k1;
 
@@ -88,7 +83,6 @@ __device__ void MurmurHash3_x64_128(const void* key, const int len, const uint32
     h2 += h1;
     h2 = h2*5+0x38495ab5;
   }
-  __syncthreads();
 
   //----------
   // tail
@@ -97,7 +91,7 @@ __device__ void MurmurHash3_x64_128(const void* key, const int len, const uint32
 
   // uint64_t 
   k1 = 0;
-  //uint64_t 
+  // uint64_t 
   k2 = 0;
 
   switch(len & 15){
@@ -135,9 +129,10 @@ __device__ void MurmurHash3_x64_128(const void* key, const int len, const uint32
   h1 += h2;
   h2 += h1;
 
+  int k = 20000;
+
   ((uint64_t*)hash)[0] = h1;
   ((uint64_t*)hash)[1] = h2;
-  __syncthreads();
 
 }
 
@@ -149,20 +144,21 @@ string genRandomString(int n)
                           'v', 'w', 'x', 'y', 'z' }; 
   
     string res = ""; 
-
     for (int i = 0; i < n; i++)  
         res = res + alphabet[rand() % MAX]; 
       
     return res; 
-} 
+}
 
-__device__ void insertInHashTable(char* key, int length, int* d_bitArray, int idx){
+void insertInHashTable(int* bitArray, char* key, int length, int idx){
   
-  // Calculate 3 hashes and insert
+// Calculate 3 hashes and insert
   uint64_t hash1[2];
   uint64_t hash2[2];
   uint64_t hash3[2];
   int bit1, bit2, bit3;
+
+
 
 
   const uint8_t* data = (const uint8_t*)key;
@@ -173,11 +169,9 @@ __device__ void insertInHashTable(char* key, int length, int* d_bitArray, int id
   c1 = BIG_CONSTANT(0x87c37b91114253d5);
   c2 = BIG_CONSTANT(0x4cf5ad432745937f);
   const uint64_t *blocks = (const uint64_t *)(data);
-  
   uint64_t k1, k2;
 
-  //uint64_t kvalues[nblocks*2];
-  uint64_t kvalues[100];
+  uint64_t kvalues[nblocks*2];
 
   for(int i = 0; i < nblocks; i++){
     k1 = getblock64(blocks,i*2+0);
@@ -194,38 +188,23 @@ __device__ void insertInHashTable(char* key, int length, int* d_bitArray, int id
     kvalues[i*2 + 1] = k2;
   }
 
-MurmurHash3_x64_128(key, length, SEED_VALUE_1, hash1, kvalues);
-bit1 = (hash1[0] % BIT_ARRAY_SIZE + hash1[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
+  MurmurHash3_x64_128(key, length, SEED_VALUE_1, hash1, kvalues);
+  bit1 = (hash1[0] % BIT_ARRAY_SIZE + hash1[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
 
-MurmurHash3_x64_128(key, length, SEED_VALUE_2, hash2, kvalues);
-bit2 = (hash2[0] % BIT_ARRAY_SIZE + hash2[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
+  MurmurHash3_x64_128(key, length, SEED_VALUE_2, hash2, kvalues);
+  bit2 = (hash2[0] % BIT_ARRAY_SIZE + hash2[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;
 
-MurmurHash3_x64_128(key, length, SEED_VALUE_3, hash3, kvalues);
-bit3 = (hash3[0] % BIT_ARRAY_SIZE + hash3[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;  
+  MurmurHash3_x64_128(key, length, SEED_VALUE_3, hash3, kvalues);
+  bit3 = (hash3[0] % BIT_ARRAY_SIZE + hash3[1] % BIT_ARRAY_SIZE) % BIT_ARRAY_SIZE;  
 
 
 
   // cout << "Bits set are: " << bit1 << "," << bit2 << " and " << bit3 << "\n";
-
-  printf("bit array at %d: %d\n", idx*3+0, bit1);
-  printf("bit array at %d: %d\n", idx*3+1, bit2);
-  printf("bit array at %d: %d\n", idx*3+2, bit3);
-  // d_HashTable[bit1] = 1;
-  // d_HashTable[bit2] = 1;
-  // d_HashTable[bit3] = 1;
-
-  
-  d_bitArray[idx*3+0] = bit1;
-  d_bitArray[idx*3+1] = bit2;
-  d_bitArray[idx*3+2] = bit3;
-
-
-  
-  
-
+  bitArray[idx*3+0] = bit1;
+  bitArray[idx*3+1] = bit2;
+  bitArray[idx*3+2] = bit3;
   //cout << "Set bits: " << bit1 << ", " << bit2 << ", " << bit3 << "\n";
 }
-
 
 /*
 void checkIfPresent(bitset<BIT_ARRAY_SIZE> HashTable, char* key, int length){
@@ -252,85 +231,66 @@ void checkIfPresent(bitset<BIT_ARRAY_SIZE> HashTable, char* key, int length){
   }
 }*/
 
-__device__ char* getword(char* d_wordsToInsert, int idx, int lenOfWord){
-  char* temp = new char[lenOfWord + 1];
-  for(int i=0; i<lenOfWord; i++){
-    temp[i] = d_wordsToInsert[idx*lenOfWord+i];
-  }
-  temp[lenOfWord] = '\0';
-  
-  return temp;
-}
-
-__global__ void parallelInsertion(char* d_wordsToInsert, int lenOfWord, int numIterations, int* d_bitArray){
-  int idx = threadIdx.x + blockIdx.x * blockDim.x;
-  char* cstr = getword(d_wordsToInsert, idx, lenOfWord);
-  //printf("Word being inserted: %s at i: %d\n", cstr, i);
-  insertInHashTable(cstr, lenOfWord, d_bitArray, idx);
-}
-
 int main(int argc, char**argv){
 
   int lenOfWord = atoi(argv[1]);
   string str;
+  char* cstr;
   int numIterations = atoi(argv[2]);
 
+
+  /*
+  // V.IMP. DON'T DELETE
+  vector<string> wordsToInsert;
+  cout << '{';
+  for(int i=0; i<numIterations;++i){
+    string s = genRandomString(lenOfWord);
+    cout << '"' << s << '"' << ", ";
+    wordsToInsert.push_back(s);
+  }
+  cout << "};";
+
+  */
 
   vector<string> wordsToInserts{"meahkbmqbhcdarzx", "wkkyhiddqscwlkob", "cwfrxsjybldbefsa", "rcbynecdyggxxpkd", "orellnmpapqfwkho", "pkmcoqhnwnkuewhs", "qmgbbuqcljjivswm", "dkqtbxixmvtrrblj", "ptnsnfwzqfjmafad", "rrwsofsbcnuvqhff", "bsaqxwpqcacehchz", "vfrkmlnozjkpqpxr", "jxkitzyxacbhhkic", "qcoendtomfgdwdwf", "cgpxiqvkuytdlcgd", "ewhtaciohordtqkv", "wcsgspqoqmsboagu", "wnnyqxnzlgdgwpbt", "rwblnsadeuguumoq", "cdrubetokyxhoach", "wdvmxxrdryxlmndq", "tukwagmlabcdefgh", "bxubumenryxlmndq", "ydiajxlsmeyatdrm", "lvihjouvsuyoypay", "ulyeimuotehzriic", "fskpggkbbipzzrzu", "cxamludfykgruowz", "giooobppleqlwpha", "pjnadqhdcnvwdtxj", "bmyppphauxnspusg", "dhiixqmbfjxjcvud", "jsuyibyebmwsiwpo", "ygyxymzevypzvjeg", "ebeocfuftsxdixti", "gsieehkchzdflilr", "jqfnxztqrsvbspky", "hsenbppkqtpddbuo", "tbbqcwivrfxjujjd", "dntgeiqvdgaijvwc", "yaubwewpjvygehlj", "xepbpiwuqzdzubdu", "bzvafspqpqwuzifw", "ovyddwyvvburczmg", "yjgfdxvtnunnesls", "plwuiupfxlzbknhk", "wppanltcfirjcdds", "ozoyvegurfwcsfmo", "xeqmrjowrghdxrjb", "awlrbgccnaehhsve"};
 
   char wordsToInsert[lenOfWord * numIterations];
+  int bitArray[3*numIterations];
 
   for(int i = 0; i < numIterations; i++){
       str = wordsToInserts[i];
-      char* cstr = new char[lenOfWord + 1];
-      strcpy(cstr, str.c_str());
 
       for(int j = 0; j < lenOfWord; j++){
-          wordsToInsert[i*lenOfWord+j] = cstr[j];
+          wordsToInsert[i*lenOfWord+j] = str[j];
     }
   }
 
-  
-  int bitArray[3*numIterations];
-  int* d_bitArray;
-  cudaMalloc((void**)&d_bitArray, 3*numIterations*sizeof(int));
-  cudaMemcpy(d_bitArray, bitArray, 3*numIterations*sizeof(int), cudaMemcpyHostToDevice);
-
-  char* d_wordsToInsert;
-  cudaMalloc((void**)&d_wordsToInsert, lenOfWord*numIterations*sizeof(char));
-  cudaMemcpy(d_wordsToInsert, wordsToInsert, lenOfWord*numIterations*sizeof(char), cudaMemcpyHostToDevice);
-
-  
-  //time and call function here
   auto t_start = std::chrono::high_resolution_clock::now();
- 
-  parallelInsertion<<<1, 50>>>(d_wordsToInsert, lenOfWord, numIterations, d_bitArray);
-  cudaDeviceSynchronize();
-  
+
+  for(int i = 0; i < numIterations; ++i){
+    str = wordsToInsert[i];
+    cstr = new char[lenOfWord + 1];
+    for(int j=0; j<lenOfWord; j++)
+      cstr[j] = wordsToInsert[i*lenOfWord+j];
+    cstr[lenOfWord] = '\0';
+    insertInHashTable(bitArray, cstr, lenOfWord, i);
+  }
+
+
   auto t_end = std::chrono::high_resolution_clock::now();
-
-  
-
-  cudaMemcpy(bitArray, d_bitArray, 3*numIterations*sizeof(int), cudaMemcpyDeviceToHost);
-
-  
-  // cudaFree(d_HashTable);
-  cudaFree(d_wordsToInsert);
-  cudaFree(d_bitArray);
-  //cudaFree(d_kvalues);
-
-  //free(HashTable);
-  
   double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end-t_start).count();
 
-  // cout << "Time taken for inserting " << numIterations <<  " records in CUDA parallelized version: " << elapsed_time_ms << setprecision(9);
+  for(auto e:bitArray){
+    cout << e << endl;
+  }
+  
+  // cout << "Time taken for inserting " << numIterations <<  " records in unparallelized version: " << elapsed_time_ms << setprecision(9);
   // cout << " ms" << endl;
 
-  
-
   std::ofstream outfile;
-  outfile.open("./Times/cuda_times.txt", std::ios_base::app);
+  outfile.open("./Times/basic_times.txt", std::ios_base::app);
   outfile << lenOfWord << ":" << numIterations << ":" << elapsed_time_ms << endl;
 
   return 0;
+
 }
